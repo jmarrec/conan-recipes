@@ -138,10 +138,12 @@ jobs:
           CONAN_UPLOAD_ONLY_WHEN_STABLE: 0
           CONAN_STABLE_BRANCH_PATTERN: main
           CONAN_CHANNEL: testing
-          CONAN_REMOTES: "https://center.conan.io@True@conancenter,https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel" # ,https://bincrafters.jfrog.io/artifactory/api/conan/public-conan@True@bincrafters"
+          CONAN_REMOTES: "https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel" # ,https://bincrafters.jfrog.io/artifactory/api/conan/public-conan@True@bincrafters"
           CONAN_ARCHS: x86_64,armv8   # No need for x86
           CONAN_VISUAL_RUNTIMES: MD,MDd   # Ignoring MT and MTd
           CONAN_BUILD_TYPES: Release
+          CONAN_PURE_C: False
+          CONAN_BUILD_POLICY: missing
         shell: bash
         run: |
           bincrafters-package-tools --auto
