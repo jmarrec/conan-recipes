@@ -143,6 +143,8 @@ jobs:
           CONAN_BUILD_TYPES: Release
           CONAN_PURE_C: False
           CONAN_BUILD_POLICY: missing
+          CONAN_SHARED_OPTION_NAME: False  # Disable building the shared version
+          CPT_TEST_FOLDER: test_v1_package
           # CONAN_CHANNEL: testing
         shell: bash
         run: |
