@@ -43,7 +43,7 @@ jobs:
           compiler: GCC
           version: 11
           allow_failure: false
-#          CONAN_DOCKER_IMAGE: conanio/gcc11-ubuntu16.04:latest
+          CONAN_DOCKER_IMAGE: conanio/gcc11-ubuntu16.04:1.62.0
 #        - build_name: GCC-12
 #          os: ubuntu-20.04
 #          compiler: GCC
@@ -135,15 +135,15 @@ jobs:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }} # github-actions, done to be able to customize on forks
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}    # Actual secret
           CONAN_UPLOAD: ${{ secrets.CONAN_UPLOAD }} # https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel, done as a secret to be able to customize on forks
-          CONAN_UPLOAD_ONLY_WHEN_STABLE: 0
+          CONAN_UPLOAD_ONLY_WHEN_STABLE: 1
           CONAN_STABLE_BRANCH_PATTERN: main
-          CONAN_CHANNEL: testing
           CONAN_REMOTES: "https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel" # ,https://bincrafters.jfrog.io/artifactory/api/conan/public-conan@True@bincrafters"
           CONAN_ARCHS: x86_64,armv8   # No need for x86
           CONAN_VISUAL_RUNTIMES: MD,MDd   # Ignoring MT and MTd
           CONAN_BUILD_TYPES: Release
           CONAN_PURE_C: False
           CONAN_BUILD_POLICY: missing
+          # CONAN_CHANNEL: testing
         shell: bash
         run: |
           bincrafters-package-tools --auto

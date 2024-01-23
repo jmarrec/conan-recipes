@@ -101,7 +101,7 @@ class RubyConan(ConanFile):
 
         if self.options.with_openssl:
             if Version(self.version) < "3.2.0":
-                self.requires("openssl/[>=1.1.1 <3.0]")
+                self.requires("openssl/3.1.0")
             elif Version(self.version) < "3.3.0":
                 # self.requires("openssl/[>=1.1.1 <=3.1]")
                 self.requires("openssl/3.1.0")
