@@ -172,6 +172,8 @@ class RubyConan(ConanFile):
                 sep = ":"
                 tc.configure_args.append(f'--with-opt-dir={sep.join(opt_dirs)}')
 
+        tc.configure_args.append("--disable-jit-support")
+
         if cross_building(self) and is_apple_os(self):
             apple_arch = to_apple_arch(self)
             if apple_arch:
