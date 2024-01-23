@@ -1,0 +1,25 @@
+diff --git a/template/Makefile.in b/template/Makefile.in
+--- template/Makefile.in
++++ template/Makefile.in
+@@ -302,6 +302,21 @@ miniruby$(EXEEXT):
+ $(PROGRAM):
+ 		@$(RM) $@
+ 		$(ECHO) linking $@
++		$(ECHO) Q = $(Q)
++		$(ECHO) PURIFY = $(PURIFY)
++		$(ECHO) CC = $(CC)
++		$(ECHO) LDFLAGS = $(LDFLAGS)
++		$(ECHO) XLDFLAGS = $(XLDFLAGS)
++		$(ECHO) MAINOBJ = $(MAINOBJ)
++		$(ECHO) EXTOBJS = $(EXTOBJS)
++		$(ECHO) LIBRUBYARG = $(LIBRUBYARG)
++		$(ECHO) MAINLIBS = $(MAINLIBS)
++		$(ECHO) LIBS = $(LIBS)
++		$(ECHO) EXTLIBS = $(EXTLIBS)
++		$(ECHO) OUTFLAG = $(OUTFLAG)
++		$(ECHO) POSTLINK = $(POSTLINK)
++		$(ECHO) ORIGINAL LINK FLAGS =  $(LIBRUBYARG) $(MAINLIBS) $(LIBS) $(EXTLIBS)
++		$(ECHO) NEW LINK FLAGS = -Wl,-rpath,$(libdir) -lruby-static -lz -lrt -lgmp -ldl -lcrypt -lm -lanl -lssl -lcrypto -lreadline -lncurses -lgdbm_compat -lgdbm -lffi -lutil -lyaml -pthread
+ 		$(Q) $(PURIFY) $(CC) $(EXE_LDFLAGS) $(XLDFLAGS) $(MAINOBJ) $(EXTOBJS) $(LIBRUBYARG) $(MAINLIBS) $(LIBS) $(EXTLIBS) $(OUTFLAG)$@
+ 		$(Q) $(POSTLINK)
+ 

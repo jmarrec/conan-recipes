@@ -1,0 +1,12 @@
+diff --git a/tool/mkconfig.rb b/tool/mkconfig.rb
+--- tool/mkconfig.rb
++++ tool/mkconfig.rb
+@@ -132,8 +132,6 @@
+       val = '"$(target_cpu)-$(target_vendor)-$(target_os)"'
+     when /^host(?:_(?:os|vendor|cpu|alias))?$/
+       val = %["$(#{name.sub(/^host/, 'target')})"]
+-    when /^includedir$/
+-      val = '"$(SDKROOT)"'+val if /darwin/ =~ arch
+     end
+     v = "  CONFIG[\"#{name}\"] #{eq} #{val}\n"
+     if fast[name]

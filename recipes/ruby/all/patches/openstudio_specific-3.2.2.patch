@@ -1,0 +1,79 @@
+diff --git a/lib/mkmf.rb b/lib/mkmf.rb
+--- lib/mkmf.rb
++++ lib/mkmf.rb
+@@ -2805,7 +2805,21 @@ MESSAGE
+   ##
+   # A C main function which does no work
+ 
+-  MAIN_DOES_NOTHING = config_string('MAIN_DOES_NOTHING') || "int main(int argc, char **argv)\n{\n  return !!argv[argc];\n}"
++  MAIN_DOES_NOTHING = config_string('MAIN_DOES_NOTHING') || <<-SRC
++int main(int argc, char **argv)
++{
++  return !!argv[argc];
++}
++
++int rb_hasFile(const char *t_filename) {
++  return 0;
++}
++
++int rb_require_embedded(const char *t_filename) {
++  return 0;
++}
++SRC
++
+   UNIVERSAL_INTS = config_string('UNIVERSAL_INTS') {|s| Shellwords.shellwords(s)} ||
+     %w[int short long long\ long]
+ 
+diff --git a/lib/rubygems/util.rb b/lib/rubygems/util.rb
+--- lib/rubygems/util.rb
++++ lib/rubygems/util.rb
+@@ -97,7 +97,9 @@ module Gem::Util
+   # returning absolute paths to the matching files.
+ 
+   def self.glob_files_in_dir(glob, base_path)
++    # TODO: Below (USED TO?) fails on windows. Throws invalid argument
+     Dir.glob(glob, base: base_path).map! {|f| File.expand_path(f, base_path) }
++    # Dir.glob(File.expand_path(glob, base_path))
+   end
+ 
+   ##
+diff --git a/load.c b/load.c
+--- load.c
++++ load.c
+@@ -18,6 +18,9 @@
+ #include "ruby/encoding.h"
+ #include "ruby/util.h"
+ 
++int rb_hasFile(const char *t_filename);
++int rb_require_embedded(const char *t_filename);
++
+ static VALUE ruby_dln_librefs;
+ 
+ #define IS_RBEXT(e) (strcmp((e), ".rb") == 0)
+@@ -1306,7 +1309,11 @@ rb_require_string(VALUE fname)
+ VALUE
+ rb_require(const char *fname)
+ {
++  if ( rb_hasFile(fname) ) {
++    return rb_require_embedded(fname);
++  } else {
+     return rb_require_string(rb_str_new_cstr(fname));
++  }
+ }
+ 
+ #if EXTSTATIC
+diff --git a/main.c b/main.c
+--- main.c
++++ main.c
+@@ -56,3 +56,11 @@ main(int argc, char **argv)
+     ruby_sysinit(&argc, &argv);
+     return rb_main(argc, argv);
+ }
++
++int rb_hasFile(const char *t_filename) {
++  return 0;
++}
++
++int rb_require_embedded(const char *t_filename) {
++  return 0;
++}
