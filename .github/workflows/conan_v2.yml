@@ -147,7 +147,7 @@ jobs:
           sudo xcode-select -switch "${{ matrix.SDKROOT }}"
           clang --version
           sdk_path=$(xcrun --sdk macosx --show-sdk-path)
-          echo "sdk_path=$sdk_path"
+          echo "sdk_path=$sdk_path" >> $GITHUB_ENV
           # These macs don't have the -f option... dunno if brew coreutils is isntalled... Just use python to read the symlink
           # readlink -f $sdk_path
           python -c "import os; print(os.path.realpath('$sdk_path'))"
@@ -175,7 +175,7 @@ jobs:
 
         echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
 
-        if [ $CONAN_MAJOR_VERSION == 1 ]; then
+        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           echo "is_conan2=false" >> "$GITHUB_OUTPUT"
           export echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
           # Unused on v1
@@ -268,13 +268,13 @@ jobs:
         exit 0
 
 
-    - name: build
+    - name: build x86_64
       shell: bash
       working-directory: recipes/ruby/all
       run: |
-        echo "| os | compiler | version | build_type | result |" >> $GITHUB_STEP_SUMMARY
-        echo "| -- | -------- | ------- | ---------- | ------ |" >> $GITHUB_STEP_SUMMARY
-        if [ $CONAN_MAJOR_VERSION == 1 ]; then
+        echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
+        echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
+        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           conan_command="conan create . ruby/3.2.2@ --test-folder test_v1_package -o '*/*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
         else
           conan_command="conan create -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
@@ -299,12 +299,48 @@ jobs:
             ICON=":interrobang: $code"
             ;;
         esac
-        if [ $CONAN_MAJOR_VERSION == 2 ]; then
+        if [ "$CONAN_MAJOR_VERSION" == "2" ]; then
           if grep -Fq "conan graph explain" conan_output; then
             conan graph explain $conan_command
           fi
         fi
-        echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | $ICON |" >> $GITHUB_STEP_SUMMARY
+        echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | x86_64 | $ICON |" >> $GITHUB_STEP_SUMMARY
+        if [ $code -ne 6 ]; then
+          exit "$code"
+        fi
+        exit 0
+
+
+    - name: build armv8
+      if: matrix.build_name == 'apple-clang-15'
+      shell: bash
+      working-directory: recipes/ruby/all
+      run: |
+        conan_command="conan create -s:h arch=armv8 -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -c:b tools.apple:sdk_path=$sdk_path -c:h tools.apple:sdk_path=$sdk_path ."
+        echo "conan_command=$conan_command"
+        set +e
+        $conan_command 2> >(tee conan_output >&2)
+        code=${PIPESTATUS[0]}
+        set -e
+        echo $code
+        case $code in
+          0)
+            ICON=":white_check_mark:"
+            ;;
+          6)
+            ICON=":arrow_right_hook:"
+            ;;
+          1)
+            ICON=":x:"
+            ;;
+          *)
+            ICON=":interrobang: $code"
+            ;;
+        esac
+        if grep -Fq "conan graph explain" conan_output; then
+            conan graph explain $conan_command
+        fi
+        echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | armv8 | $ICON |" >> $GITHUB_STEP_SUMMARY
         if [ $code -ne 6 ]; then
           exit "$code"
         fi
