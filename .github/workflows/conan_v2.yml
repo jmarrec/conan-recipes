@@ -26,18 +26,18 @@ jobs:
         build_name: [gcc-9, gcc-10] #, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, msvc-2019, msvc-2022, VS-2019, VS-2022]
         build_type: [Release, Debug]
         include:
-#        - build_name: gcc-9
-#          compiler: gcc
-#          version: 9
-#          os: ubuntu-20.04
-#          # dockerImage: conanio/gcc9-ubuntu16.04:latest
-#          allow_failure: false
-#        - build_name: gcc-10
-#          compiler: gcc
-#          version: 10
-#          os: ubuntu-20.04
-#          # dockerImage: conanio/gcc10-ubuntu16.04:latest
-#          allow_failure: false
+        - build_name: gcc-9
+          compiler: gcc
+          version: 9
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc9-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: gcc-10
+          compiler: gcc
+          version: 10
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+          allow_failure: false
 #        - build_name: gcc-11
 #          compiler: gcc
 #          version: 11
