@@ -1,10 +1,7 @@
 versions:
-#  "3.3.0":
-#    folder: all
-#    build: minimal
-#  "3.2.2":
-#    folder: all
-#    build: minimal
+  "3.3.0":
+    folder: all
+  "3.2.2":
+    folder: all
   "3.1.0":
     folder: all
-    build: minimal
