@@ -123,7 +123,13 @@ jobs:
       shell: bash
       run: |
         set -x
-        pip install conan
+
+        if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
+          pip install "conan<2"
+        else
+          pip install conan
+        fi
+
         conan --version
         CONAN_MAJOR_VERSION=$(python -c "from conans import __version__; print(__version__.split('.')[0])")
         if [ "$RUNNER_OS" == "Windows" ]; then
@@ -184,6 +190,9 @@ jobs:
           if [ "$RUNNER_OS" == "Linux" ]; then
             conan profile update settings.compiler.libcxx=libstdc++11 default
           fi
+
+          conan profile update settings.build_type=${{ matrix.build_type }} default
+
           conan profile show default
         else
           echo "is_conan2=true" >> "$GITHUB_OUTPUT"
@@ -198,15 +207,15 @@ jobs:
           sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
           # Windows only
           sed -i.bak 's/compiler.runtime_type=.*$/compiler.runtime_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
-          if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
-            # Remove these
-            sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
-            sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
-            sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
-            # Set to visual studio
-            sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
-            sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
-          fi
+          # if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
+          #   # Remove these
+          #   sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
+          #   sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
+          #   sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
+          #   # Set to visual studio
+          #   sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
+          #   sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
+          # fi
           rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
           conan profile show
 
@@ -265,7 +274,11 @@ jobs:
       run: |
         echo "| os | compiler | version | build_type | result |" >> $GITHUB_STEP_SUMMARY
         echo "| -- | -------- | ------- | ---------- | ------ |" >> $GITHUB_STEP_SUMMARY
-        conan_command="conan create -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+        if [ $CONAN_MAJOR_VERSION == 1 ]; then
+          conan_command="conan create . ruby/3.2.2@ --test-folder test_v1_package -o '*/*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
+        else
+          conan_command="conan create -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+        fi
         echo "conan_command=$conan_command"
         set +e
         $conan_command 2> >(tee conan_output >&2)
@@ -286,8 +299,10 @@ jobs:
             ICON=":interrobang: $code"
             ;;
         esac
-        if grep -Fq "conan graph explain" conan_output; then
-          conan graph explain $conan_command
+        if [ $CONAN_MAJOR_VERSION == 2 ]; then
+          if grep -Fq "conan graph explain" conan_output; then
+            conan graph explain $conan_command
+          fi
         fi
         echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | $ICON |" >> $GITHUB_STEP_SUMMARY
         if [ $code -ne 6 ]; then
