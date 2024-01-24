@@ -141,7 +141,9 @@ jobs:
           clang --version
           sdk_path=$(xcrun --sdk macosx --show-sdk-path)
           echo "sdk_path=$sdk_path"
-          readlink -f $sdk_path
+          # These macs don't have the -f option... dunno if brew coreutils is isntalled... Just use python to read the symlink
+          # readlink -f $sdk_path
+          python -c "import os; print(os.path.realpath('$sdk_path'))"
           # maybe hardcode conf.tools.apple:sdk_path in profile?"
         elif [ "${{ matrix.compiler }}" = "gcc" ]; then
           CC=/usr/bin/gcc-${{ matrix.version }}
