@@ -181,7 +181,7 @@ jobs:
           conan profile show
 
           echo "core.download:parallel={{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
-          echo "core.sources:download_cache=\"$CONAN_HOME/.conan-download-cache\"" >> $CONAN_HOME/global.conf
+          echo "core.sources:download_cache=\"$CONAN_USER_HOME/.conan-download-cache\"" >> $CONAN_HOME/global.conf
           cat $CONAN_HOME/global.conf
         fi
 
@@ -199,8 +199,11 @@ jobs:
       id: cacheconan
       with:
         path: |
-          ${{ env.CONAN_USER_HOME }}
-        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-ck=${{ secrets.CACHE_KEY }}
+          ${{ env.CONAN_USER_HOME }}/.conan-download-cache
+          ${{ env.CONAN_USER_HOME }}/short
+          ${{ env.CONAN_HOME }}/p
+          ${{ env.CONAN_HOME }}/data
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-cachekey=${{ secrets.CACHE_KEY }}
         restore-keys: |
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
@@ -209,8 +212,11 @@ jobs:
       if: steps.cacheconan.outputs.cache-hit == 'true'
       shell: bash
       run: |
+        set -x
         cat $CONAN_PROFILE_DEFAULT
         ls $CONAN_HOME
+        ls $CONAN_USER_HOME/.conan-download-cache
+        cat $CONAN_HOME/global.conf || true
         ls $CONAN_USER_HOME/short || true
 
 
