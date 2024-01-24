@@ -180,8 +180,9 @@ jobs:
           sed -i 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
           conan profile show
 
-          echo "core.download:parallel={{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
-          echo "core.sources:download_cache=\"$CONAN_USER_HOME/.conan-download-cache\"" >> $CONAN_HOME/global.conf
+          echo "core:non_interactive = True" >> $CONAN_HOME/global.conf
+          echo "core.download:parallel = {{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
+          echo "core.sources:download_cache = $CONAN_USER_HOME/.conan-download-cache" >> $CONAN_HOME/global.conf
           cat $CONAN_HOME/global.conf
         fi
 
@@ -210,6 +211,10 @@ jobs:
 
     - name: Did restoring the conan-cache work? Yes
       if: steps.cacheconan.outputs.cache-hit == 'true'
+      run: |
+        echo "Yes"
+
+    - name: Debug
       shell: bash
       run: |
         set -x
@@ -218,6 +223,8 @@ jobs:
         ls $CONAN_USER_HOME/.conan-download-cache
         cat $CONAN_HOME/global.conf || true
         ls $CONAN_USER_HOME/short || true
+        conan config show core.download:download_cache
+        conan config show core.sources:download_cache
 
 
     - name: build
