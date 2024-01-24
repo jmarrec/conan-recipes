@@ -78,3 +78,15 @@ diff --git a/main.c b/main.c
 +int rb_require_embedded(const char *t_filename) {
 +  return 0;
 +}
+diff --git a/win32/Makefile.sub b/win32/Makefile.sub
+--- win32/Makefile.sub
++++ win32/Makefile.sub
+@@ -1160,7 +1160,7 @@ $(LIBRUBY_SO):	$(LIBRUBY_A) $(DLDOBJS) $(RUBYDEF) $(RUBY_SO_NAME).res
+ 		@-$(PRE_LIBRUBY_UPDATE)
+ !endif
+ 		$(ECHO) linking shared-library $(@:\=/)
+-		$(Q) $(LDSHARED) $(DLDOBJS) $(LIBRUBY_A) \
++		$(Q) $(LDSHARED) $(MAINOBJ) $(DLDOBJS) $(LIBRUBY_A) \
+ 			$(RUBY_SO_NAME).res $(SOLIBS) $(EXTSOLIBS) $(LIBS) -Fe$@ -link $(LDFLAGS) \
+ 			$(LIBRUBY_DLDFLAGS)
+ 		@$(RM) dummy.lib dummy.exp
