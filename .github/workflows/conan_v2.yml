@@ -142,6 +142,8 @@ jobs:
         echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> "$GITHUB_OUTPUT"
         echo "CONAN_USER_HOME=$CONAN_USER_HOME" >> "$GITHUB_OUTPUT"
 
+        echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> $GITHUB_ENV
+        echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
 
         if [ "$RUNNER_OS" == "macOS" ]; then
           sudo xcode-select -switch "${{ matrix.SDKROOT }}"
@@ -173,7 +175,6 @@ jobs:
           gcc --version
         fi
 
-        echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
 
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           echo "is_conan2=false" >> "$GITHUB_OUTPUT"
