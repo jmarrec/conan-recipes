@@ -1,0 +1,151 @@
+name: Conan
+
+on:
+  push:
+    branches: [ main, develop ]
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+
+    name: ${{ matrix.build_name }}
+
+    # Note: as of 2021-01-29, this only works for push, not for pull request
+    # if: "!(contains(github.event.head_commit.message, 'skip') && contains(github.event.head_commit.message, 'ci'))"
+    # runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allow_failure }}
+    strategy:
+      # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
+      fail-fast: false
+      matrix:
+        # build_name: [GCC-9, GCC-10, GCC-11, GCC-12, GCC-13, Apple-Clang 11, Apple-Clang 12, Apple-Clang 13, Apple-Clang 14, Apple-Clang 15, MSVC-2022, MSVC-2019]
+        build_name: [GCC-11, Apple-Clang 14, MSVC-2022]
+        include:
+#        - build_name: GCC-9
+#          os: ubuntu-20.04
+#          compiler: GCC
+#          version: 9
+#          allow_failure: false
+#          CONAN_DOCKER_IMAGE: conanio/gcc9-ubuntu16.04:latest
+#        - build_name: GCC-10
+#          os: ubuntu-20.04
+#          compiler: GCC
+#          version: 10
+#          allow_failure: false
+#          CONAN_DOCKER_IMAGE: conanio/gcc10-ubuntu16.04:latest
+        - build_name: GCC-11
+          os: ubuntu-20.04
+          compiler: GCC
+          version: 11
+          allow_failure: false
+          CONAN_DOCKER_IMAGE: conanio/gcc11-ubuntu16.04:1.62.0
+#        - build_name: GCC-12
+#          os: ubuntu-20.04
+#          compiler: GCC
+#          version: 12
+#          allow_failure: false
+#          CONAN_DOCKER_IMAGE: conanio/gcc12-ubuntu16.04:latest
+#        - build_name: GCC-13
+#          os: ubuntu-20.04
+#          compiler: GCC
+#          version: 13
+#          allow_failure: false
+#          CONAN_DOCKER_IMAGE: conanio/gcc13-ubuntu16.04:latest
+#        - build_name: Apple-Clang 11
+#          os: macos-11
+#          compiler: APPLE_CLANG
+#          version: 11.0
+#          allow_failure: false
+#        - build_name: Apple-Clang 12
+#          os: macos-11
+#          compiler: APPLE_CLANG
+#          version: 12.0
+#          allow_failure: false
+#        - build_name: Apple-Clang 13
+#          os: macos-12
+#          compiler: APPLE_CLANG
+#          version: 13.0
+#          allow_failure: false
+        - build_name: Apple-Clang 14
+          os: macos-12
+          compiler: APPLE_CLANG
+          version: 14.0
+          allow_failure: false
+#        - build_name: Apple-Clang 15
+#          os: macos-13
+#          compiler: APPLE_CLANG
+#          version: 15.0
+#          allow_failure: false
+        - build_name: MSVC-2022
+          os: windows-2022
+          compiler: VISUAL
+          version: 17
+          allow_failure: false
+#        - build_name: MSVC-2019
+#          os: windows-2019
+#          compiler: VISUAL
+#          version: 16
+#          allow_failure: false
+
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install Conan
+        shell: bash
+        run: |
+          set -x
+          pip install conan==1.61.0 conan_package_tools
+          # Patched bincrafters-package-tools
+          pip install git+https://github.com/jmarrec/bincrafters-package-tools.git@update_xcode
+          # conan config install https://github.com/conan-io/hooks.git -sf hooks -tf hooks
+          # conan config set hooks.conan-center
+          conan config set general.revisions_enabled=True
+          conan config set general.parallel_download=8
+
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            # The openssl@3 package installed on CI adds these files to the pkgconfig directory
+            # Remove them here so they aren't found instead of the version of OpenSSL built by Conan
+            rm /usr/local/lib/pkgconfig/libcrypto.pc
+            rm /usr/local/lib/pkgconfig/libssl.pc
+            rm /usr/local/lib/pkgconfig/openssl.pc
+          fi;
+
+          # Use lowercase based on repository owner, so that NREL -> nrel.
+          # That should work on forks, while not replacing 'nrel' with '***' everywhere like it does when you set CONAN_USERNAME as a repo secret...
+          # We want BPT/CPT to produces openstudio_ruby/2.7.2@<CONAN_USERNAME>/<channel>
+          CONAN_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "CONAN_USERNAME=$CONAN_USERNAME" >> $GITHUB_ENV
+
+          matrix="{\"name\": \"${{ matrix.build_name }}\", \"compiler\": \"${{ matrix.compiler }}\", \"version\": \"${{ matrix.version}}\", \"dockerImage\": \"${{ matrix.CONAN_DOCKER_IMAGE }}\", \"cwd\": \"./recipes/ruby/all\", \"recipe_version\": \"3.1.0\"}"
+          bincrafters-package-tools prepare-env --platform gha --config "${matrix}"
+      - name: Run
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_LOGIN_USERNAME }} # github-actions, done to be able to customize on forks
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}    # Actual secret
+          CONAN_UPLOAD: ${{ secrets.CONAN_UPLOAD }} # https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel, done as a secret to be able to customize on forks
+          CONAN_UPLOAD_ONLY_WHEN_STABLE: 1
+          CONAN_STABLE_BRANCH_PATTERN: main
+          CONAN_REMOTES: "https://conan.openstudio.net/artifactory/api/conan/openstudio@True@nrel" # ,https://bincrafters.jfrog.io/artifactory/api/conan/public-conan@True@bincrafters"
+          CONAN_ARCHS: x86_64 #, ,armv8   # No need for x86
+          CONAN_VISUAL_RUNTIMES: MD,MDd   # Ignoring MT and MTd
+          CONAN_BUILD_TYPES: Release
+          CONAN_PURE_C: True   # Only use default compiler.libcxx
+          CONAN_BUILD_POLICY: missing
+          CONAN_SHARED_OPTION_NAME: False  # Disable building the shared version
+          CPT_TEST_FOLDER: test_v1_package
+          # CONAN_CHANNEL: testing
+        shell: bash
+        run: |
+          bincrafters-package-tools --auto

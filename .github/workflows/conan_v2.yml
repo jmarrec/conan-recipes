@@ -1,0 +1,218 @@
+name: Conan v2
+
+on:
+  push:
+    branches: [ main, develop ]
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+
+    name: "${{ matrix.build_name }} - ${{ matrix.build_type }}"
+
+    # Note: as of 2021-01-29, this only works for push, not for pull request
+    # if: "!(contains(github.event.head_commit.message, 'skip') && contains(github.event.head_commit.message, 'ci'))"
+    # runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allow_failure }}
+    strategy:
+      # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
+      fail-fast: false
+      matrix:
+        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, msvc-2019, msvc-2022, VS-2019, VS-2022]
+        build_type: [Release, Debug]
+        include:
+        - build_name: gcc-9
+          compiler: gcc
+          version: 9
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc9-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: gcc-10
+          compiler: gcc
+          version: 10
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: gcc-11
+          compiler: gcc
+          version: 11
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc11-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: gcc-12
+          compiler: gcc
+          version: 12
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc12-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: gcc-13
+          compiler: gcc
+          version: 13
+          os: ubuntu-20.04
+          # dockerImage: conanio/gcc13-ubuntu16.04:latest
+          allow_failure: false
+        - build_name: apple-clang-11
+          compiler: apple-clang
+          version: 11
+          os: macos-11
+          SDKROOT: /Applications/Xcode_11.7.app
+          allow_failure: false
+        - build_name: apple-clang-12
+          compiler: apple-clang
+          version: 12
+          os: macos-11
+          SDKROOT: /Applications/Xcode_12.4.app
+          allow_failure: false
+        - build_name: apple-clang-13
+          compiler: apple-clang
+          version: 13
+          os: macos-12
+          SDKROOT: /Applications/Xcode_13.2.1.app
+          allow_failure: false
+        - build_name: apple-clang-14
+          compiler: apple-clang
+          version: 14
+          os: macos-12
+          SDKROOT: /Applications/Xcode_14.2.app
+          allow_failure: false
+        - build_name: apple-clang-15
+          compiler: apple-clang
+          version: 15
+          os: macos-13
+          SDKROOT: /Applications/Xcode_15.2.app
+          allow_failure: false
+        - build_name: msvc-2019
+          compiler: msvc
+          version: 192
+          os: windows-2019
+          allow_failure: false
+        - build_name: msvc-2022
+          compiler: msvc
+          version: 193
+          os: windows-2019
+          allow_failure: false
+        - build_name: VS-2019
+          compiler: Visual Studio
+          version: 16
+          os: windows-2022
+          allow_failure: false
+        - build_name: VS-2022
+          compiler: Visual Studio
+          version: 17
+          os: windows-2022
+          allow_failure: false
+
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: "0"
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.8"
+
+    - name: Setup Conan
+      id: setup-conan
+      shell: bash
+      run: |
+        pip install conan
+        conan --version
+        CONAN_MAJOR_VERSION=$(python -c "from conans import __version__; print(__version__.split('.')[0])")
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          DIR_SEP="\\"
+        else
+          DIR_SEP="/"
+        fi
+        CONAN_USER_HOME="${{ github.workspace }}${DIR_SEP}conan-cache"
+
+        echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> "$GITHUB_OUTPUT"
+        echo "CONAN_USER_HOME=$CONAN_USER_HOME" >> "$GITHUB_OUTPUT"
+
+
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          sudo xcode-select -switch "${{ matrix.SDKROOT }}"
+          clang --version
+          sdk_path=$(xcrun --sdk macos --show-sdk-path)
+          echo "sdk_path=$sdk_path"
+          readlink -f $sdk_path
+          # maybe hardcode conf.tools.apple:sdk_path in profile?"
+        elif [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=/usr/bin/gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=/usr/bin/g++-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "FC=/usr/bin/gfortran-${{ matrix.version }}" >> $GITHUB_ENV
+          CONAN_PROFILE="gcc${{ matrix.version }}"
+        fi
+
+        echo CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}.conan${DIR_SEP}profiles${DIR_SEP}default" >> $GITHUB_ENV
+
+        echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
+
+        if [ $CONAN_MAJOR_VERSION == 1 ]; then
+          echo "is_conan2=false" >> "$GITHUB_OUTPUT"
+          echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
+          # Unused on v1
+          echo CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan" >> $GITHUB_ENV
+
+          echo "Enabling conan revisions and setting parallel_download"
+          conan config set general.revisions_enabled=True
+          conan config set general.parallel_download=8
+          # We detect the profile and use that as one of the cache key parameters, so if GHA upgrades compilers it won't pick up old binaries
+          conan profile new --detect --force default
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            conan profile update settings.compiler.libcxx=libstdc++11 default
+          fi
+          conan profile show default
+        else
+          echo "is_conan2=true" >> "$GITHUB_OUTPUT"
+          echo CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2" >> $GITHUB_ENV
+          echo CONAN_PROFILE_DEFAULT=$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default >> $GITHUB_ENV
+          conan profile path default
+
+          conan profile detect --force --name default
+          cat $CONAN_PROFILE_DEFAULT
+          sed -i 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
+          conan profile show
+
+          echo "core.download:parallel={{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
+          echo "core.sources:download_cache=\"$CONAN_HOME/.conan-download-cache\"" >> $CONAN_HOME/global.conf
+          cat $CONAN_HOME/global.conf
+        fi
+
+        # Use lowercase based on repository owner, so that NREL -> nrel.
+        # That should work on forks, while not replacing 'nrel' with '***' everywhere like it does when you set CONAN_USERNAME as a repo secret...
+        # We want BPT/CPT to produces openstudio_ruby/2.7.2@<CONAN_USERNAME>/<channel>
+        CONAN_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        echo "CONAN_USERNAME=$CONAN_USERNAME" >> $GITHUB_ENV
+
+    - name: Setup Conan Cache
+      uses: actions/cache@v4
+      id: cacheconan
+      with:
+        path: |
+          ${{ env.CONAN_USER_HOME }}
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-ck=${{ secrets.CACHE_KEY }}
+        restore-keys: |
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
+
+    - name: Did restoring the conan-cache work? Yes
+      if: steps.cacheconan.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        cat $CONAN_PROFILE_DEFAULT
+        ls $CONAN_HOME
+        ls $CONAN_USER_HOME/short || true
+
+
+    - name: build
+      shell: bash
+      working-directory: recipes/ruby/all
+      run: |
+        conan_command="conan create -s:a compiler.cppstd=20 --version 3.1.0 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+        echo "conan_command=$conan_command"
