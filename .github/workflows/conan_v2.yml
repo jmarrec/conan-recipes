@@ -130,7 +130,7 @@ jobs:
         else
           DIR_SEP="/"
         fi
-        CONAN_USER_HOME="${{ github.workspace }}${DIR_SEP}conan-cache"
+        export CONAN_USER_HOME="${{ github.workspace }}${DIR_SEP}conan-cache"
 
         echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> "$GITHUB_OUTPUT"
         echo "CONAN_USER_HOME=$CONAN_USER_HOME" >> "$GITHUB_OUTPUT"
@@ -154,7 +154,7 @@ jobs:
 
         if [ $CONAN_MAJOR_VERSION == 1 ]; then
           echo "is_conan2=false" >> "$GITHUB_OUTPUT"
-          echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
+          export echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
           # Unused on v1
           CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan" >> $GITHUB_ENV
           CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
@@ -170,7 +170,7 @@ jobs:
           conan profile show default
         else
           echo "is_conan2=true" >> "$GITHUB_OUTPUT"
-          CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
+          export CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
           CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
 
           conan profile detect --force --name default
