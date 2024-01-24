@@ -77,8 +77,9 @@ jobs:
         - build_name: apple-clang-14
           compiler: apple-clang
           version: 14
-          os: macos-12
-          SDKROOT: /Applications/Xcode_14.2.app
+          os: macos-13
+          SDKROOT: /Applications/Xcode_14.3.1.app
+          # macos-12  /Applications/Xcode_14.2.app
           allow_failure: false
         - build_name: apple-clang-15
           compiler: apple-clang
@@ -282,3 +283,11 @@ jobs:
           exit "$code"
         fi
         exit 0
+
+    - name: upload
+      shell: bash
+      run: |
+        set -x
+        conan remote add nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
+        conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
+        conan upload -r nrel-v2 --confirm 'ruby/3.2.2:*'
