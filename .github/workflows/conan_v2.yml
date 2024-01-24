@@ -218,13 +218,15 @@ jobs:
       shell: bash
       run: |
         set -x
+        set +e
         cat $CONAN_PROFILE_DEFAULT
         ls $CONAN_HOME
         ls $CONAN_USER_HOME/.conan-download-cache
-        cat $CONAN_HOME/global.conf || true
-        ls $CONAN_USER_HOME/short || true
+        cat $CONAN_HOME/global.conf
+        ls $CONAN_USER_HOME/short
         conan config show core.download:download_cache
         conan config show core.sources:download_cache
+        exit 0
 
 
     - name: build
