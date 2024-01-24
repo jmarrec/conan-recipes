@@ -196,6 +196,17 @@ jobs:
           # Mac has the FreeBSD flavor of sed and MUST take a backup suffix...
           sed -i.bak 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
           sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+          # Windows only
+          sed -i.bak 's/compiler.runtime_type=.*$/compiler.runtime_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+          if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
+            # Remove these
+            sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
+            sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
+            sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
+            # Set to visual studio
+            sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
+            sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
+          fi
           rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
           conan profile show
 
