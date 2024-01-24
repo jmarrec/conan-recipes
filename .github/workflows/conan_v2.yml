@@ -192,8 +192,10 @@ jobs:
           conan profile detect --force --name default
           conan profile path default
           cat $CONAN_PROFILE_DEFAULT
-          sed -i 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
-          sed -i 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+          # Mac has the FreeBSD flavor of sed and MUST take a backup suffix...
+          sed -i.bak 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
+          sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+          rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
           conan profile show
 
           echo "core:non_interactive = True" >> $CONAN_HOME/global.conf
