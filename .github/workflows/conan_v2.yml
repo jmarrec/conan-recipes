@@ -172,9 +172,9 @@ jobs:
           echo "is_conan2=true" >> "$GITHUB_OUTPUT"
           echo CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2" >> $GITHUB_ENV
           echo CONAN_PROFILE_DEFAULT=$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default >> $GITHUB_ENV
-          conan profile path default
 
           conan profile detect --force --name default
+          conan profile path default
           cat $CONAN_PROFILE_DEFAULT
           sed -i 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
           conan profile show
