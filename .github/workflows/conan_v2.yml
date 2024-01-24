@@ -150,15 +150,14 @@ jobs:
           CONAN_PROFILE="gcc${{ matrix.version }}"
         fi
 
-        echo CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}.conan${DIR_SEP}profiles${DIR_SEP}default" >> $GITHUB_ENV
-
         echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
 
         if [ $CONAN_MAJOR_VERSION == 1 ]; then
           echo "is_conan2=false" >> "$GITHUB_OUTPUT"
           echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
           # Unused on v1
-          echo CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan" >> $GITHUB_ENV
+          CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan" >> $GITHUB_ENV
+          CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
 
           echo "Enabling conan revisions and setting parallel_download"
           conan config set general.revisions_enabled=True
@@ -171,8 +170,8 @@ jobs:
           conan profile show default
         else
           echo "is_conan2=true" >> "$GITHUB_OUTPUT"
-          echo CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2" >> $GITHUB_ENV
-          echo CONAN_PROFILE_DEFAULT=$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default >> $GITHUB_ENV
+          CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
+          CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
 
           conan profile detect --force --name default
           conan profile path default
@@ -184,6 +183,9 @@ jobs:
           echo "core.sources:download_cache=\"$CONAN_HOME/.conan-download-cache\"" >> $CONAN_HOME/global.conf
           cat $CONAN_HOME/global.conf
         fi
+
+        echo CONAN_HOME="$CONAN_HOME" >> $GITHUB_ENV
+        echo CONAN_PROFILE_DEFAULT="$CONAN_PROFILE_DEFAULT" >> $GITHUB_ENV
 
         # Use lowercase based on repository owner, so that NREL -> nrel.
         # That should work on forks, while not replacing 'nrel' with '***' everywhere like it does when you set CONAN_USERNAME as a repo secret...
