@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    name: "${{ matrix.build_name }} - ${{ matrix.build_type }}"
+    name: "ruby/${{ matrix.recipe_version }} - ${{ matrix.build_name }} - ${{ matrix.build_type }}"
 
     # Note: as of 2021-01-29, this only works for push, not for pull request
     # if: "!(contains(github.event.head_commit.message, 'skip') && contains(github.event.head_commit.message, 'ci'))"
@@ -25,8 +25,9 @@ jobs:
       matrix:
         # build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, msvc-2019, msvc-2022, VS-2019, VS-2022]
         # build_type: [Release, Debug]
-        build_name: [msvc-2022]
+        build_name: [msvc-2022, VS-2022]
         build_type: [Release]
+        recipe_version: ["3.2.2", "3.3.0"]
         include:
 #        - build_name: gcc-9
 #          compiler: gcc
@@ -104,11 +105,11 @@ jobs:
 #          version: 16
 #          os: windows-2019
 #          allow_failure: false
-#        - build_name: VS-2022
-#          compiler: Visual Studio
-#          version: 17
-#          os: windows-2022
-#          allow_failure: false
+        - build_name: VS-2022
+          compiler: Visual Studio
+          version: 17
+          os: windows-2022
+          allow_failure: false
 
 
     steps:
@@ -287,9 +288,9 @@ jobs:
         echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
         echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan_command="conan create . 'ruby/3.2.2@' --test-folder test_v1_package -o '*/*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
+          conan_command="conan create . 'ruby/${{ matrix.recipe_version }}@_/_' --test-folder test_v1_package -o '*/*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
         else
-          conan_command="conan create -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+          conan_command="conan create -s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
         fi
         echo "conan_command=$conan_command"
         set +e
@@ -328,7 +329,7 @@ jobs:
       shell: bash
       working-directory: recipes/ruby/all
       run: |
-        conan_command="conan create -s:h arch=armv8 -s:a compiler.cppstd=20 --version 3.2.2 -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -c:b tools.apple:sdk_path=$sdk_path -c:h tools.apple:sdk_path=$sdk_path ."
+        conan_command="conan create -s:h arch=armv8 -s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -c:b tools.apple:sdk_path=$sdk_path -c:h tools.apple:sdk_path=$sdk_path ."
         echo "conan_command=$conan_command"
         set +e
         $conan_command 2> >(tee conan_output >&2)
@@ -364,7 +365,7 @@ jobs:
         set -x
         conan remote add nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
-        conan upload -r nrel-v2 --confirm 'ruby/3.2.2:*'
+        conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
 
         # Clean: Remove non-critical folders from the cache
         conan remove "*" -s -b -f || true  # v1
