@@ -86,7 +86,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
          get = proc {|opts|
 -          opts = Array(opts).map { |o| "--#{o}" }
 +          if $mswin
-+            opts = Array(opts).map { |o| "--#{o} --msvc-syntax" }
++            opts = Array(opts).map { |o| "--msvc-syntax --#{o}" }
 +          else
 +            opts = Array(opts).map { |o| "--#{o}" }
 +          end
