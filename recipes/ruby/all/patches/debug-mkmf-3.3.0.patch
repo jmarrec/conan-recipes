@@ -74,7 +74,15 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
        if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
        # if and only if package specific config command is given
        elsif ($PKGCONFIG ||=
-@@ -1882,9 +1909,17 @@ SRC
+@@ -1877,14 +1904,20 @@ SRC
+         # default to pkg-config command
+         pkgconfig = $PKGCONFIG
+         args = [pkg]
++        if $mswin
++          args << "--msvc-syntax"
++        end
+       elsif find_executable0(pkgconfig = "#{pkg}-config")
+       # default to package specific config command, as a last resort.
        else
          pkgconfig = nil
        end
@@ -85,11 +93,6 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
        if pkgconfig
          get = proc {|opts|
 -          opts = Array(opts).map { |o| "--#{o}" }
-+          if $mswin
-+            opts = Array(opts).map { |o| "--msvc-syntax --#{o}" }
-+          else
-+            opts = Array(opts).map { |o| "--#{o}" }
-+          end
            opts = xpopen([*envs, pkgconfig, *opts, *args], err:[:child, :out], &:read)
            Logging.open {puts opts.each_line.map{|s|"=> #{s.inspect}"}}
            opts.strip if $?.success?
