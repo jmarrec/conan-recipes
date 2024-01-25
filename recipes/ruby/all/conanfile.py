@@ -90,7 +90,7 @@ class RubyConan(ConanFile):
             # readline isn't supported on Windows
             del self.options.with_readline
 
-        if is_msvc(self):
+        if is_msvc(self) and Version(self.version) < "3.2.0":
             # conan libffi will not allow linking right now with MSVC
             del self.options.with_libffi
             # conan LibYAML will not link properly right now with MSVC, so using built-in Psych provided libYAML
