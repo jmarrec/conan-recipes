@@ -63,7 +63,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +      Logging.message("config_string('PKG_CONFIG') = %s\n", config_string("PKG_CONFIG"))
 +      Logging.message("ENV['PKG_CONFIG'] = %s\n", ENV['PKG_CONFIG'])
 +
-+      $PKGCONFIG ||= (pkgconfig = with_config("pkg-config") {config_string("PKG_CONFIG") || "pkg-config"}) || ENV["PKG_CONFIG"]
++      $PKGCONFIG ||= (pkgconfig = with_config("pkg-config") {config_string("PKG_CONFIG") || ENV["PKG_CONFIG"] || "pkg-config"})
 +      Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
 +      if $PKGCONFIG
 +        Logging.message("xsystem([*envs, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs, $PKGCONFIG, "--exists", pkg]))
