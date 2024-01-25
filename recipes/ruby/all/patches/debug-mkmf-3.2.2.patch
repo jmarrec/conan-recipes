@@ -1,0 +1,71 @@
+diff --git a/ext/openssl/extconf.rb b/ext/openssl/extconf.rb
+--- ext/openssl/extconf.rb
++++ ext/openssl/extconf.rb
+@@ -98,6 +98,7 @@ def find_openssl_library
+ end
+ 
+ Logging::message "=== Checking for required stuff... ===\n"
++Logging::message "dir_config_given: #{dir_config_given}"
+ pkg_config_found = !dir_config_given && pkg_config("openssl") && have_header("openssl/ssl.h")
+ 
+ # Force finding the PKG config anyways because we want to grab the one
+diff --git a/lib/mkmf.rb b/lib/mkmf.rb
+--- lib/mkmf.rb
++++ lib/mkmf.rb
+@@ -1798,11 +1798,14 @@ SRC
+   # application.
+   #
+   def dir_config(target, idefault=nil, ldefault=nil)
++    Logging.message("dir_config: target = %s, idefault = %s, ldefault= %s\n", target, idefault, ldefault)
+     if conf = $config_dirs[target]
++      Logging.message("Found cached in $config_dirs = %s\n", conf)
+       return conf
+     end
+ 
+     if dir = with_config(target + "-dir", (idefault unless ldefault))
++      Logging.message("with-%s-dir passed: %s\n", target, dir)
+       defaults = Array === dir ? dir : dir.split(File::PATH_SEPARATOR)
+       idefault = ldefault = nil
+     end
+@@ -1832,6 +1835,7 @@ SRC
+     end
+     $LIBPATH = ldirs | $LIBPATH
+ 
++    Logging.message("Caching as: [%s, %s]\n", idir, ldir)
+     $config_dirs[target] = [idir, ldir]
+   end
+ 
+@@ -1855,14 +1859,24 @@ SRC
+   # invoked with the options and a stripped output string is returned without
+   # modifying any of the global values mentioned above.
+   def pkg_config(pkg, *options)
++    Logging.message("pkg-config for %s, options=%s\n", pkg, options)
+     _, ldir = dir_config(pkg)
+     if ldir
++      Logging.message("pkg_config: ldir = %s\n", ldir)
+       pkg_config_path = "#{ldir}/pkgconfig"
+       if File.directory?(pkg_config_path)
+         Logging.message("PKG_CONFIG_PATH = %s\n", pkg_config_path)
+         envs = ["PKG_CONFIG_PATH"=>[pkg_config_path, ENV["PKG_CONFIG_PATH"]].compact.join(File::PATH_SEPARATOR)]
+       end
+     end
++
++    pkgconfig = with_config("#{pkg}-config")
++    Logging.message("--with-#{pkg}-config: '%s'\n", pkgconfig)
++    if pkgconfig
++      pkg_config_exe = find_executable0(pkgconfig)
++      Logging.message("pkg_config_exe: %s\n", pkg_config_exe)
++    end
++
+     if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
+       # if and only if package specific config command is given
+     elsif ($PKGCONFIG ||=
+@@ -1877,6 +1891,8 @@ SRC
+     else
+       pkgconfig = nil
+     end
++    Logging.message("pkgconfig = %s\n", pkgconfig)
++    Logging.message("ENV PKG_CONFIG_PATH = %s\n", ENV["PKG_CONFIG_PATH"])
+     if pkgconfig
+       get = proc {|opts|
+         opts = Array(opts).map { |o| "--#{o}" }

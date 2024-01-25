@@ -172,7 +172,15 @@ class RubyConan(ConanFile):
                 sep = ":"
                 tc.configure_args.append(f'--with-opt-dir={sep.join(opt_dirs)}')
 
-        tc.configure_args.append("--disable-jit-support")
+        # Not needed
+        if Version(self.version) < "3.3.0":
+            tc.configure_args.append("--disable-jit-support")
+        else:
+            tc.configure_args.append("--disable-yjit")
+            tc.configure_args.append("--disable-rjit")
+
+        if Version(self.version) >= "3.2.0":
+            tc.configure_args.append("--enable-mkmf-verbose")
 
         if cross_building(self) and is_apple_os(self):
             apple_arch = to_apple_arch(self)
