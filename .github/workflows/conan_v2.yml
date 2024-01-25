@@ -23,90 +23,92 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, msvc-2019, msvc-2022, VS-2019, VS-2022]
-        build_type: [Release, Debug]
+        # build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, msvc-2019, msvc-2022, VS-2019, VS-2022]
+        # build_type: [Release, Debug]
+        build_name: [msvc-2022]
+        build_type: [Release]
         include:
-        - build_name: gcc-9
-          compiler: gcc
-          version: 9
-          os: ubuntu-20.04
-          # dockerImage: conanio/gcc9-ubuntu16.04:latest
-          allow_failure: false
-        - build_name: gcc-10
-          compiler: gcc
-          version: 10
-          os: ubuntu-20.04
-          # dockerImage: conanio/gcc10-ubuntu16.04:latest
-          allow_failure: false
-        - build_name: gcc-11
-          compiler: gcc
-          version: 11
-          os: ubuntu-22.04
-          # dockerImage: conanio/gcc11-ubuntu16.04:latest
-          allow_failure: false
-        - build_name: gcc-12
-          compiler: gcc
-          version: 12
-          os: ubuntu-22.04
-          # dockerImage: conanio/gcc12-ubuntu16.04:latest
-          allow_failure: false
-        - build_name: gcc-13
-          compiler: gcc
-          version: 13
-          os: ubuntu-22.04
-          # dockerImage: conanio/gcc13-ubuntu16.04:latest
-          allow_failure: false
-        - build_name: apple-clang-11
-          compiler: apple-clang
-          version: 11
-          os: macos-11
-          SDKROOT: /Applications/Xcode_11.7.app
-          allow_failure: false
-        - build_name: apple-clang-12
-          compiler: apple-clang
-          version: 12
-          os: macos-11
-          SDKROOT: /Applications/Xcode_12.4.app
-          allow_failure: false
-        - build_name: apple-clang-13
-          compiler: apple-clang
-          version: 13
-          os: macos-12
-          SDKROOT: /Applications/Xcode_13.2.1.app
-          allow_failure: false
-        - build_name: apple-clang-14
-          compiler: apple-clang
-          version: 14
-          os: macos-13
-          SDKROOT: /Applications/Xcode_14.3.1.app
-          # macos-12  /Applications/Xcode_14.2.app
-          allow_failure: false
-        - build_name: apple-clang-15
-          compiler: apple-clang
-          version: 15
-          os: macos-13
-          SDKROOT: /Applications/Xcode_15.2.app
-          allow_failure: false
-        - build_name: msvc-2019
-          compiler: msvc
-          version: 192
-          os: windows-2019
-          allow_failure: false
+#        - build_name: gcc-9
+#          compiler: gcc
+#          version: 9
+#          os: ubuntu-20.04
+#          # dockerImage: conanio/gcc9-ubuntu16.04:latest
+#          allow_failure: false
+#        - build_name: gcc-10
+#          compiler: gcc
+#          version: 10
+#          os: ubuntu-20.04
+#          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+#          allow_failure: false
+#        - build_name: gcc-11
+#          compiler: gcc
+#          version: 11
+#          os: ubuntu-22.04
+#          # dockerImage: conanio/gcc11-ubuntu16.04:latest
+#          allow_failure: false
+#        - build_name: gcc-12
+#          compiler: gcc
+#          version: 12
+#          os: ubuntu-22.04
+#          # dockerImage: conanio/gcc12-ubuntu16.04:latest
+#          allow_failure: false
+#        - build_name: gcc-13
+#          compiler: gcc
+#          version: 13
+#          os: ubuntu-22.04
+#          # dockerImage: conanio/gcc13-ubuntu16.04:latest
+#          allow_failure: false
+#        - build_name: apple-clang-11
+#          compiler: apple-clang
+#          version: 11
+#          os: macos-11
+#          SDKROOT: /Applications/Xcode_11.7.app
+#          allow_failure: false
+#        - build_name: apple-clang-12
+#          compiler: apple-clang
+#          version: 12
+#          os: macos-11
+#          SDKROOT: /Applications/Xcode_12.4.app
+#          allow_failure: false
+#        - build_name: apple-clang-13
+#          compiler: apple-clang
+#          version: 13
+#          os: macos-12
+#          SDKROOT: /Applications/Xcode_13.2.1.app
+#          allow_failure: false
+#        - build_name: apple-clang-14
+#          compiler: apple-clang
+#          version: 14
+#          os: macos-13
+#          SDKROOT: /Applications/Xcode_14.3.1.app
+#          # macos-12  /Applications/Xcode_14.2.app
+#          allow_failure: false
+#        - build_name: apple-clang-15
+#          compiler: apple-clang
+#          version: 15
+#          os: macos-13
+#          SDKROOT: /Applications/Xcode_15.2.app
+#          allow_failure: false
+#        - build_name: msvc-2019
+#          compiler: msvc
+#          version: 192
+#          os: windows-2019
+#          allow_failure: false
         - build_name: msvc-2022
           compiler: msvc
           version: 193
           os: windows-2022
           allow_failure: false
-        - build_name: VS-2019
-          compiler: Visual Studio
-          version: 16
-          os: windows-2019
-          allow_failure: false
-        - build_name: VS-2022
-          compiler: Visual Studio
-          version: 17
-          os: windows-2022
-          allow_failure: false
+#        - build_name: VS-2019
+#          compiler: Visual Studio
+#          version: 16
+#          os: windows-2019
+#          allow_failure: false
+#        - build_name: VS-2022
+#          compiler: Visual Studio
+#          version: 17
+#          os: windows-2022
+#          allow_failure: false
 
 
     steps:
@@ -154,6 +156,14 @@ jobs:
           # readlink -f $sdk_path
           python -c "import os; print(os.path.realpath('$sdk_path'))"
           # maybe hardcode conf.tools.apple:sdk_path in profile?"
+
+          # The openssl@3 package installed on CI adds these files to the pkgconfig directory
+          # Remove them here so they aren't found instead of the version of OpenSSL built by Conan
+          # I should have fixed this, but better safe
+          rm /usr/local/lib/pkgconfig/libcrypto.pc
+          rm /usr/local/lib/pkgconfig/libssl.pc
+          rm /usr/local/lib/pkgconfig/openssl.pc
+
         elif [ "${{ matrix.compiler }}" = "gcc" ]; then
           CC=/usr/bin/gcc-${{ matrix.version }}
           # echo "CC=/usr/bin/gcc-${{ matrix.version }}" >> $GITHUB_ENV
