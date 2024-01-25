@@ -95,12 +95,12 @@ jobs:
         - build_name: msvc-2022
           compiler: msvc
           version: 193
-          os: windows-2019
+          os: windows-2022
           allow_failure: false
         - build_name: VS-2019
           compiler: Visual Studio
           version: 16
-          os: windows-2022
+          os: windows-2019
           allow_failure: false
         - build_name: VS-2022
           compiler: Visual Studio
