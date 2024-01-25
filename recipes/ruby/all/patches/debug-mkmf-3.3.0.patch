@@ -35,7 +35,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
      $config_dirs[key] = [idir, ldir]
    end
  
-@@ -1859,15 +1863,26 @@ SRC
+@@ -1859,15 +1863,33 @@ SRC
        x ? x.inspect : self
      end
  
@@ -58,14 +58,22 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +        pkg_config_exe = find_executable0(pkgconfig)
 +        Logging.message("pkg_config_exe: %s\n", pkg_config_exe)
 +      end
++      Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
++      Logging.message("--with-pkg-config = %s\n", with_config("pkg-config"))
++      Logging.message("config_string('PKG_CONFIG') = %s\n", config_string("PKG_CONFIG"))
++      Logging.message("ENV['PKG_CONFIG'] = %s\n", ENV['PKG_CONFIG'])
++      Logging.message("xsystem([*envs, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs, $PKGCONFIG, "--exists", pkg]))
++      envs2 = ["PKG_CONFIG_PATH"=> ENV["PKG_CONFIG_PATH"]]
++      Logging.message("xsystem([*envs2, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs2, $PKGCONFIG, "--exists", pkg]))
 +
        if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
        # if and only if package specific config command is given
        elsif ($PKGCONFIG ||=
-@@ -1882,6 +1897,8 @@ SRC
+@@ -1882,6 +1904,9 @@ SRC
        else
          pkgconfig = nil
        end
++      Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
 +      Logging.message("pkgconfig = %s\n", pkgconfig)
 +      Logging.message("ENV PKG_CONFIG_PATH = %s\n", ENV["PKG_CONFIG_PATH"])
        if pkgconfig
