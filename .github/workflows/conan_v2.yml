@@ -248,6 +248,7 @@ jobs:
         restore-keys: |
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
+        save-always: ${{ matrix.compiler == 'msvc' }}
 
     - name: Did restoring the conan-cache work? Yes
       if: steps.cacheconan.outputs.cache-hit == 'true'
