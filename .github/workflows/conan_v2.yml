@@ -243,8 +243,9 @@ jobs:
         # Use lowercase based on repository owner, so that NREL -> nrel.
         # That should work on forks, while not replacing 'nrel' with '***' everywhere like it does when you set CONAN_USERNAME as a repo secret...
         # We want BPT/CPT to produces openstudio_ruby/2.7.2@<CONAN_USERNAME>/<channel>
-        CONAN_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-        echo "CONAN_USERNAME=$CONAN_USERNAME" >> $GITHUB_ENV
+        # TODO: I actually do NOT want to set it now! so rename to REPO_USERNAME
+        REPO_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        echo "REPO_USERNAME=$REPO_USERNAME" >> $GITHUB_ENV
 
     - name: Setup Conan Cache
       uses: actions/cache@v4
@@ -291,7 +292,7 @@ jobs:
         echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
         echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan_command="conan create . 'ruby/${{ matrix.recipe_version }}@_/_' --test-folder test_v1_package -o '*/*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
+          conan_command="conan create . ruby/${{ matrix.recipe_version }}@ --test-folder test_v1_package -o '*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
         else
           conan_command="conan create -s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
         fi
