@@ -1,3 +1,8 @@
+Subject: debug-mkmf-3.3.0
+
+Adds verbose debug messages that will end up in mkmf.log to see why an
+extension can't be configured
+
 diff --git a/ext/openssl/extconf.rb b/ext/openssl/extconf.rb
 --- ext/openssl/extconf.rb
 +++ ext/openssl/extconf.rb
@@ -12,7 +17,45 @@ diff --git a/ext/openssl/extconf.rb b/ext/openssl/extconf.rb
 diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 --- lib/mkmf.rb
 +++ lib/mkmf.rb
-@@ -1793,11 +1793,14 @@ SRC
+@@ -394,13 +394,15 @@ MESSAGE
+   end
+ 
+   def env_quote(envs)
+-    envs.map {|e, v| "#{e}=#{v.quote}"}
++    envs.map {|e, v| "$env#{e}=\"#{v.quote}\""}
+   end
+ 
+   def xsystem command, opts = nil
+     env, command = expand_command(command)
+     Logging::open do
+-      puts [env_quote(env), command.quote].join(' ')
++      puts "======"
++      puts env_quote(env).join('\n')
++      puts command.quote
+       if opts and opts[:werror]
+         result = nil
+         Logging.postpone do |log|
+@@ -558,7 +560,10 @@ MSG
+ 
+   def try_link0(src, opt="", *opts, &b) # :nodoc:
+     exe = CONFTEST+$EXEEXT
+-    # Retrieve ldflags from opts
++    Logging.message("\n====== try_link0 ======\n")
++    Logging.message("src = %s\n", src)
++    Logging.message("opt = %s\n", opt)
++    Logging.message("opts = %s\n", opts)
+     ldflags = ""
+     opts.each do |h|
+       if h.is_a?(Hash) && h.key?(:ldflags)
+@@ -567,6 +572,7 @@ MSG
+       end
+     end
+     cmd = link_command(ldflags, opt)
++    Logging.message("Trying #{exe}: #{cmd}\n")
+     if $universal
+       require 'tmpdir'
+       Dir.mktmpdir("mkmf_", oldtmpdir = ENV["TMPDIR"]) do |tmpdir|
+@@ -1802,11 +1808,14 @@ SRC
    #
    def dir_config(target, idefault=nil, ldefault=nil)
      key = [target, idefault, ldefault].compact.join("\0")
@@ -27,7 +70,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
        defaults = Array === dir ? dir : dir.split(File::PATH_SEPARATOR)
        idefault = ldefault = nil
      end
-@@ -1831,6 +1834,7 @@ SRC
+@@ -1840,6 +1849,7 @@ SRC
      end
      $LIBPATH = ldirs | $LIBPATH
  
@@ -35,7 +78,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
      $config_dirs[key] = [idir, ldir]
    end
  
-@@ -1859,15 +1863,38 @@ SRC
+@@ -1868,15 +1878,38 @@ SRC
        x ? x.inspect : self
      end
  
@@ -74,15 +117,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
        if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
        # if and only if package specific config command is given
        elsif ($PKGCONFIG ||=
-@@ -1877,11 +1904,18 @@ SRC
-         # default to pkg-config command
-         pkgconfig = $PKGCONFIG
-         args = [pkg]
-+        if $mswin
-+          args << "--msvc-syntax"
-+        end
-       elsif find_executable0(pkgconfig = "#{pkg}-config")
-       # default to package specific config command, as a last resort.
+@@ -1891,14 +1924,19 @@ SRC
        else
          pkgconfig = nil
        end
@@ -91,5 +126,29 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +      Logging.message("ENV PKG_CONFIG_PATH = %s\n", ENV["PKG_CONFIG_PATH"])
 +      Logging.message("$mswin = %s\n", $mswin)
        if pkgconfig
+         has_ms_win_syntax = false
+         if $mswin
+           has_ms_win_syntax = xpopen([pkgconfig, "--help"]).read.include?('msvc-syntax')
+           if has_ms_win_syntax
+             args << "--msvc-syntax"
++            Logging.message("Enabling --msvc-syntax flag\n")
+           else
+-            Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead")
++            Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead.")
+           end
+         end
          get = proc {|opts|
-           opts = Array(opts).map { |o| "--#{o}" }
+@@ -1923,6 +1961,10 @@ SRC
+         }
+       end
+       orig_ldflags = $LDFLAGS
++      # Ideally should really do --libs-only-L  and --libs-only-l from the get
++      # go and use that in a modified try_ldflags so they isn't an issue
++      # ordering the link command
++      Logging.message("orig_ldflags = %s\n", orig_ldflags)
+       if get and !options.empty?
+         get[options]
+       elsif get and try_ldflags(ldflags = get['libs'])
+-- 
+2.43.0
+
