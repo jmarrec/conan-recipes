@@ -1,0 +1,135 @@
+diff --git a/lib/mkmf.rb b/lib/mkmf.rb
+--- lib/mkmf.rb
++++ lib/mkmf.rb
+@@ -412,13 +412,15 @@ MESSAGE
+   end
+ 
+   def env_quote(envs)
+-    envs.map {|e, v| "#{e}=#{v.quote}"}
++    envs.map {|e, v| "$env:#{e}=\"#{v.quote}\""}
+   end
+ 
+   def xsystem command, opts = nil
+     env, command = expand_command(command)
+     Logging::open do
+-      puts [env_quote(env), command.quote].join(' ')
++      puts "======"
++      puts env_quote(env).join('\n')
++      puts command.quote
+       if opts and opts[:werror]
+         result = nil
+         Logging.postpone do |log|
+@@ -576,6 +578,10 @@ MSG
+ 
+   def try_link0(src, opt="", *opts, &b) # :nodoc:
+     exe = CONFTEST+$EXEEXT
++    Logging.message("\n====== try_link0 ======\n")
++    Logging.message("src = %s\n", src)
++    Logging.message("opt = %s\n", opt)
++    Logging.message("opts = %s\n", opts)
+     # Retrieve ldflags from opts
+     ldflags = ""
+     opts.each do |h|
+@@ -585,6 +591,7 @@ MSG
+       end
+     end
+     cmd = link_command(ldflags, opt)
++    Logging.message("Trying #{exe}: #{cmd}\n")
+     if $universal
+       require 'tmpdir'
+       Dir.mktmpdir("mkmf_", oldtmpdir = ENV["TMPDIR"]) do |tmpdir|
+@@ -1808,11 +1815,14 @@ SRC
+   # application.
+   #
+   def dir_config(target, idefault=nil, ldefault=nil)
++    Logging.message("dir_config: target = %s, idefault = %s, ldefault= %s\n", target, idefault, ldefault)
+     if conf = $config_dirs[target]
++      Logging.message("Found cached in $config_dirs = %s\n", conf)
+       return conf
+     end
+ 
+     if dir = with_config(target + "-dir", (idefault unless ldefault))
++      Logging.message("with-%s-dir passed: %s\n", target, dir)
+       defaults = Array === dir ? dir : dir.split(File::PATH_SEPARATOR)
+       idefault = ldefault = nil
+     end
+@@ -1842,6 +1852,7 @@ SRC
+     end
+     $LIBPATH = ldirs | $LIBPATH
+ 
++    Logging.message("Caching as: [%s, %s]\n", idir, ldir)
+     $config_dirs[target] = [idir, ldir]
+   end
+ 
+@@ -1865,14 +1876,36 @@ SRC
+   # invoked with the option and a stripped output string is returned
+   # without modifying any of the global values mentioned above.
+   def pkg_config(pkg, option=nil)
++    Logging.message("pkg-config for %s, option=%s\n", pkg, option)
+     _, ldir = dir_config(pkg)
+     if ldir
++      Logging.message("pkg_config: ldir = %s\n", ldir)
+       pkg_config_path = "#{ldir}/pkgconfig"
+       if File.directory?(pkg_config_path)
+         Logging.message("PKG_CONFIG_PATH = %s\n", pkg_config_path)
+         envs = ["PKG_CONFIG_PATH"=>[pkg_config_path, ENV["PKG_CONFIG_PATH"]].compact.join(File::PATH_SEPARATOR)]
+       end
+     end
++
++    pkgconfig = with_config("#{pkg}-config")
++    Logging.message("--with-#{pkg}-config: '%s'\n", pkgconfig)
++    if pkgconfig
++      pkg_config_exe = find_executable0(pkgconfig)
++      Logging.message("pkg_config_exe: %s\n", pkg_config_exe)
++    end
++    Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
++    Logging.message("--with-pkg-config = %s\n", with_config("pkg-config"))
++    Logging.message("config_string('PKG_CONFIG') = %s\n", config_string("PKG_CONFIG"))
++    Logging.message("ENV['PKG_CONFIG'] = %s\n", ENV['PKG_CONFIG'])
+++
++    $PKGCONFIG ||= (pkgconfig = with_config("pkg-config") {config_string("PKG_CONFIG") || ENV["PKG_CONFIG"] || "pkg-config"})
++    Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
++    if $PKGCONFIG
++      Logging.message("xsystem([*envs, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs, $PKGCONFIG, "--exists", pkg]))
++      envs2 = ["PKG_CONFIG_PATH"=> ENV["PKG_CONFIG_PATH"]]
++      Logging.message("xsystem([*envs2, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs2, $PKGCONFIG, "--exists", pkg]))
++    end
++
+     if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
+       # if and only if package specific config command is given
+     elsif ($PKGCONFIG ||=
+@@ -1891,14 +1924,19 @@ SRC
+     else
+       pkgconfig = nil
+     end
++    Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
++    Logging.message("pkgconfig = %s\n", pkgconfig)
++    Logging.message("ENV PKG_CONFIG_PATH = %s\n", ENV["PKG_CONFIG_PATH"])
++    Logging.message("$mswin = %s\n", $mswin)
+     if pkgconfig
+       has_ms_win_syntax = false
+       if $mswin
+         has_ms_win_syntax = xpopen([pkgconfig, "--help"]).read.include?('msvc-syntax')
+         if has_ms_win_syntax
+           args << "--msvc-syntax"
++          Logging.message("Enabling --msvc-syntax flag\n")
+         else
+-          Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead")
++          Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead.")
+         end
+       end
+ 
+@@ -1923,6 +1961,10 @@ SRC
+       }
+     end
+     orig_ldflags = $LDFLAGS
++    # Ideally should really do --libs-only-L  and --libs-only-l from the get
++    # go and use that in a modified try_ldflags so they isn't an issue
++    # ordering the link command
++    Logging.message("orig_ldflags = %s\n", orig_ldflags)
+     if get and option
+       get[option]
+     elsif get and try_ldflags(ldflags = get['libs'])
+-- 
+2.43.0
+

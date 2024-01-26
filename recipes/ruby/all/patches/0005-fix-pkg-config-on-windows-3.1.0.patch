@@ -1,0 +1,102 @@
+Subject: fix-pkg-config-on-windows-3.1.0
+
+1. Store the PKG_CONFIG in Makefile.sub (or try to get it from the ENV var PKG_CONFIG
+2. Pass --msvc-syntax. This assumes you use pkgconf (1.4.0 or above, 7 years ago!) and not pkg-config (freedesktop).
+3. try_ldflags is broken, it passes them as "opt" and NOT as ldflags. As a result they (specifically the /libpath:xxx one) end up passed before the `-link` command to CL.exe and it throws because it ignores it and therefore can't find libffi.
+```
+cl : Command line warning D9002 : ignoring unknown option '-libpath:C:/Users/julien/.conan2/p/libff3726d89a6255c/p/lib'
+```
+7ad336
+
+diff --git a/lib/mkmf.rb b/lib/mkmf.rb
+--- lib/mkmf.rb
++++ lib/mkmf.rb
+@@ -576,7 +576,15 @@ MSG
+ 
+   def try_link0(src, opt="", *opts, &b) # :nodoc:
+     exe = CONFTEST+$EXEEXT
+-    cmd = link_command("", opt)
++    # Retrieve ldflags from opts
++    ldflags = ""
++    opts.each do |h|
++      if h.is_a?(Hash) && h.key?(:ldflags)
++        ldflags = h[:ldflags]
++        break
++      end
++    end
++    cmd = link_command(ldflags, opt)
+     if $universal
+       require 'tmpdir'
+       Dir.mktmpdir("mkmf_", oldtmpdir = ENV["TMPDIR"]) do |tmpdir|
+@@ -706,9 +714,10 @@ MSG
+     $LDFLAGS = ldflags unless ret
+   end
+ 
+-  def try_ldflags(flags, opts = {})
++  def try_ldflags(ldflags, opts = {})
++    opts = {:ldflags => ldflags}.update(opts)
+     opts = {:werror => true}.update(opts) if $mswin
+-    try_link(MAIN_DOES_NOTHING, flags, opts)
++    try_link(MAIN_DOES_NOTHING, "", opts)
+   end
+ 
+   def append_ldflags(flags, *opts)
+@@ -1867,7 +1876,7 @@ SRC
+     if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
+       # if and only if package specific config command is given
+     elsif ($PKGCONFIG ||=
+-           (pkgconfig = with_config("pkg-config", ("pkg-config" unless CROSS_COMPILING))) &&
++           (pkgconfig = with_config("pkg-config") {config_string("PKG_CONFIG") || ENV["PKG_CONFIG"] || "pkg-config"}) &&
+            find_executable0(pkgconfig) && pkgconfig) and
+         xsystem([*envs, $PKGCONFIG, "--exists", pkg])
+       # default to pkg-config command
+@@ -1883,10 +1892,34 @@ SRC
+       pkgconfig = nil
+     end
+     if pkgconfig
++      has_ms_win_syntax = false
++      if $mswin
++        has_ms_win_syntax = xpopen([pkgconfig, "--help"]).read.include?('msvc-syntax')
++        if has_ms_win_syntax
++          args << "--msvc-syntax"
++        else
++          Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead")
++        end
++      end
++
+       get ||= proc {|opt|
+         opt = xpopen([*envs, pkgconfig, "--#{opt}"], err:[:child, :out], &:read)
+         Logging.open {puts opt.each_line.map{|s|"=> #{s.inspect}"}}
+-        opt.strip if $?.success?
++        if $?.success?
++          opts = opts.strip
++          if $mswin and not has_ms_win_syntax
++            opts = Shellwords.shellwords(ldflags).map { |s|
++              if s.start_with?('-l')
++                "#{s[2..]}.lib"
++              elsif s.start_with?('-L')
++                "/libpath:#{s[2..]}"
++              else
++                s
++              end
++            }.quote.join(" ")
++          end
++          opts
++        end
+       }
+     end
+     orig_ldflags = $LDFLAGS
+diff --git a/win32/Makefile.sub b/win32/Makefile.sub
+--- win32/Makefile.sub
++++ win32/Makefile.sub
+@@ -1090,6 +1090,7 @@ s,@top_srcdir@,$(srcdir),;t t
+ s,@try_header@,try_compile,;t t
+ s,@ruby_pc@,$(ruby_pc),;t t
+ s,@MJIT_SUPPORT@,$(MJIT_SUPPORT),;t t
++s,@PKG_CONFIG@,$(PKG_CONFIG),;t t
+ <<KEEP
+ 
+ miniruby: miniruby$(EXEEXT)
+-- 
+2.43.0
+
