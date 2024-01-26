@@ -376,7 +376,7 @@ jobs:
 
         conan remote add nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan user -p -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
+          conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
           conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
         else
           conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
