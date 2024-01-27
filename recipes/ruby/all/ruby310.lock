@@ -1,0 +1,20 @@
+{
+    "version": "0.5",
+    "requires": [
+        "zlib/1.2.12#c57575ff8ba6ade58cb9ef18d5a247af%1705999194.561",
+        "termcap/1.3.1#1986f84bf21dd07ea774b027a3201fcb%1678542508.75",
+        "readline/8.1.2#3388ec44ec402489dc38f081a91a6c21%1702372583.775",
+        "openssl/3.1.0#adb90207a855ebfe1f1caa88b39c4fe0%1696808387.085",
+        "libyaml/0.2.5#67a8e4c752b3a452c4796ddc90589f74%1676469565.275",
+        "libffi/3.4.4#35eb63842b505824b70aedc1baefc916%1682741110.044",
+        "gmp/6.2.1#560eab30a8f52beae2cef5ff26cdd61c%1698225617.238"
+    ],
+    "build_requires": [
+        "pkgconf/2.1.0#27f44583701117b571307cf5b5fe5605%1701537936.436",
+        "ninja/1.11.1#77587f8c8318662ac8e5a7867eb4be21%1684431244.21",
+        "meson/1.2.2#aace9dcc1db58fa42ecb5292f724092d%1695994576.349",
+        "m4/1.4.19#b38ced39a01e31fef5435bc634461fd2%1700758725.451",
+        "autoconf/2.71#53be95d228b2dcb30dc199cb84262d8f%1693395343.513"
+    ],
+    "python_requires": []
+}
