@@ -86,15 +86,10 @@ class RubyConan(ConanFile):
         self.settings.rm_safe("compiler.libcxx")
         self.settings.rm_safe("compiler.cppstd")
 
-        if self.settings.os == "Windows":
-            # readline isn't supported on Windows
+        if Version(self.version) > "3.3.0" or self.settings.os == "Windows":
+            # readline isn't supported on Windows and it is removed at 3.3.0
+            # https://github.com/ruby/ruby/commit/507801c6d782d5708aabdccdb6799768beacffc4
             del self.options.with_readline
-
-        if is_msvc(self) and Version(self.version) < "3.2.0":
-            # conan libffi will not allow linking right now with MSVC
-            del self.options.with_libffi
-            # conan LibYAML will not link properly right now with MSVC, so using built-in Psych provided libYAML
-            del self.options.with_libyaml
 
     def requirements(self):
         self.requires("zlib/1.2.12")
