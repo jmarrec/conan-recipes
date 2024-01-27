@@ -70,7 +70,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +        if $?.success?
 +          opts = opts.strip
 +          if $mswin and not has_ms_win_syntax
-+            opts = Shellwords.shellwords(ldflags).map { |s|
++            opts = Shellwords.shellwords(opts).map { |s|
 +              if s.start_with?('-l')
 +                "#{s[2..]}.lib"
 +              elsif s.start_with?('-L')
@@ -96,6 +96,3 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
  <<KEEP
  
  !if "$(HAVE_BASERUBY)" != "yes" || "$(CROSS_COMPILING)" == "yes"
--- 
-2.43.0
-

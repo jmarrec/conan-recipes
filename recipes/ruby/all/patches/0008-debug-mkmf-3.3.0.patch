@@ -149,6 +149,3 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
        if get and !options.empty?
          get[options]
        elsif get and try_ldflags(ldflags = get['libs'])
--- 
-2.43.0
-

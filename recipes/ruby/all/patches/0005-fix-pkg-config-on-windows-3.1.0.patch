@@ -6,7 +6,6 @@ Subject: fix-pkg-config-on-windows-3.1.0
 ```
 cl : Command line warning D9002 : ignoring unknown option '-libpath:C:/Users/julien/.conan2/p/libff3726d89a6255c/p/lib'
 ```
-7ad336
 
 diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 --- lib/mkmf.rb
@@ -41,7 +40,11 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
    end
  
    def append_ldflags(flags, *opts)
-@@ -1867,7 +1876,7 @@ SRC
+@@ -1864,29 +1873,50 @@ SRC
+         envs = ["PKG_CONFIG_PATH"=>[pkg_config_path, ENV["PKG_CONFIG_PATH"]].compact.join(File::PATH_SEPARATOR)]
+       end
+     end
++    args = []
      if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
        # if and only if package specific config command is given
      elsif ($PKGCONFIG ||=
@@ -50,10 +53,23 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
             find_executable0(pkgconfig) && pkgconfig) and
          xsystem([*envs, $PKGCONFIG, "--exists", pkg])
        # default to pkg-config command
-@@ -1883,10 +1892,34 @@ SRC
+       pkgconfig = $PKGCONFIG
+-      get = proc {|opt|
+-        opt = xpopen([*envs, $PKGCONFIG, "--#{opt}", pkg], err:[:child, :out], &:read)
+-        Logging.open {puts opt.each_line.map{|s|"=> #{s.inspect}"}}
+-        opt.strip if $?.success?
+-      }
++      args = [pkg]
+     elsif find_executable0(pkgconfig = "#{pkg}-config")
+       # default to package specific config command, as a last resort.
+     else
        pkgconfig = nil
      end
      if pkgconfig
+-      get ||= proc {|opt|
+-        opt = xpopen([*envs, pkgconfig, "--#{opt}"], err:[:child, :out], &:read)
+-        Logging.open {puts opt.each_line.map{|s|"=> #{s.inspect}"}}
+-        opt.strip if $?.success?
 +      has_ms_win_syntax = false
 +      if $mswin
 +        has_ms_win_syntax = xpopen([pkgconfig, "--help"]).read.include?('msvc-syntax')
@@ -63,15 +79,14 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +          Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead")
 +        end
 +      end
-+
-       get ||= proc {|opt|
-         opt = xpopen([*envs, pkgconfig, "--#{opt}"], err:[:child, :out], &:read)
-         Logging.open {puts opt.each_line.map{|s|"=> #{s.inspect}"}}
--        opt.strip if $?.success?
++      get = proc {|opts|
++        opts = Array(opts).map { |o| "--#{o}" }
++        opts = xpopen([*envs, pkgconfig, *opts, *args], err:[:child, :out], &:read)
++        Logging.open {puts opts.each_line.map{|s|"=> #{s.inspect}"}}
 +        if $?.success?
 +          opts = opts.strip
 +          if $mswin and not has_ms_win_syntax
-+            opts = Shellwords.shellwords(ldflags).map { |s|
++            opts = Shellwords.shellwords(opts).map { |s|
 +              if s.start_with?('-l')
 +                "#{s[2..]}.lib"
 +              elsif s.start_with?('-L')
@@ -97,6 +112,3 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
  <<KEEP
  
  miniruby: miniruby$(EXEEXT)
--- 
-2.43.0
-

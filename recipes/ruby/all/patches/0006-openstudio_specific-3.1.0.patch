@@ -5,7 +5,7 @@ Add rb_hasFile and rb_require_embedded so we can embedded gems
 diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 --- lib/mkmf.rb
 +++ lib/mkmf.rb
-@@ -2825,7 +2825,21 @@ MESSAGE
+@@ -2822,7 +2822,21 @@ MESSAGE
    ##
    # A C main function which does no work
  
@@ -94,6 +94,3 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
  			$(RUBY_SO_NAME).res $(SOLIBS) $(EXTSOLIBS) $(LIBS) -Fe$@ -link $(LDFLAGS) \
  			$(LIBRUBY_DLDFLAGS)
  		@$(RM) dummy.lib dummy.exp
--- 
-2.43.0
-

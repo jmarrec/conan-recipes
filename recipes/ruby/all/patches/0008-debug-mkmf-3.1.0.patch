@@ -86,7 +86,7 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +    Logging.message("--with-pkg-config = %s\n", with_config("pkg-config"))
 +    Logging.message("config_string('PKG_CONFIG') = %s\n", config_string("PKG_CONFIG"))
 +    Logging.message("ENV['PKG_CONFIG'] = %s\n", ENV['PKG_CONFIG'])
-++
++
 +    $PKGCONFIG ||= (pkgconfig = with_config("pkg-config") {config_string("PKG_CONFIG") || ENV["PKG_CONFIG"] || "pkg-config"})
 +    Logging.message("$PKGCONFIG = %s\n", $PKGCONFIG)
 +    if $PKGCONFIG
@@ -95,10 +95,10 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +      Logging.message("xsystem([*envs2, $PKGCONFIG, '--exists', pkg]) = %s\n", xsystem([*envs2, $PKGCONFIG, "--exists", pkg]))
 +    end
 +
+     args = []
      if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
        # if and only if package specific config command is given
-     elsif ($PKGCONFIG ||=
-@@ -1891,14 +1924,19 @@ SRC
+@@ -1888,14 +1921,19 @@ SRC
      else
        pkgconfig = nil
      end
@@ -118,8 +118,8 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
 +          Logging.message("WARNING: #{pkgconfig} does not support the --msvc-syntax. Try using a recent pkgconf instead.")
          end
        end
- 
-@@ -1923,6 +1961,10 @@ SRC
+       get = proc {|opts|
+@@ -1920,6 +1958,10 @@ SRC
        }
      end
      orig_ldflags = $LDFLAGS
@@ -130,6 +130,3 @@ diff --git a/lib/mkmf.rb b/lib/mkmf.rb
      if get and option
        get[option]
      elsif get and try_ldflags(ldflags = get['libs'])
--- 
-2.43.0
-

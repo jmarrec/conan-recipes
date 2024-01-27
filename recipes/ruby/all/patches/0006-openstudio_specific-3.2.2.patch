@@ -93,6 +93,3 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
  			$(RUBY_SO_NAME).res $(SOLIBS) $(EXTSOLIBS) $(LIBS) -Fe$@ -link $(LDFLAGS) \
  			$(LIBRUBY_DLDFLAGS)
  		@$(RM) dummy.lib dummy.exp
--- 
-2.43.0
-
