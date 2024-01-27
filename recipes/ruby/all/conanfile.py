@@ -97,7 +97,7 @@ class RubyConan(ConanFile):
             del self.options.with_libyaml
 
     def requirements(self):
-        self.requires("zlib/1.2.12")
+        self.requires("zlib/1.3.1")
 
         if self.options.with_openssl:
             if Version(self.version) < "3.2.0":
@@ -114,12 +114,14 @@ class RubyConan(ConanFile):
 
         if self.options.get_safe("with_libffi"):
             self.requires("libffi/3.4.4")
+            # self.requires("libffi/[>=3.4 <3.5]")
 
         if self.options.get_safe("with_readline"):
-            self.requires("readline/8.1.2")
+            self.requires("readline/8.2")
+            # self.requires("readline/[>=8.1 <9]")
 
         if self.options.with_gmp:
-            self.requires("gmp/6.2.1")
+            self.requires("gmp/6.3.0")
 
     def validate(self):
         if is_msvc(self) and is_msvc_static_runtime(self):
