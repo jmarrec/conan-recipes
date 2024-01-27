@@ -245,6 +245,10 @@ jobs:
         REPO_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
         echo "REPO_USERNAME=$REPO_USERNAME" >> $GITHUB_ENV
 
+        # (Can't do that before we've se the CONAN_HOME / CONAN_USER_HOME)
+        conan remote add --force nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
+        conan remote list
+
     - name: Setup Conan Cache
       uses: actions/cache@v4
       id: cacheconan
@@ -372,7 +376,6 @@ jobs:
       run: |
         set -x
 
-        conan remote add nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
           conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
