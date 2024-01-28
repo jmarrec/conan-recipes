@@ -1,12 +1,15 @@
 {
     "version": "0.5",
     "requires": [
+        "zlib/1.3.1#af8f2ef3d8e0fddf1975281d7fe43bf6%1705999193.687",
         "zlib/1.2.12#c57575ff8ba6ade58cb9ef18d5a247af%1705999194.561",
         "termcap/1.3.1#1986f84bf21dd07ea774b027a3201fcb%1678542508.75",
+        "readline/8.2#5618fbfed2466d9dc0fa8834faf06a6a%1702837438.071",
         "readline/8.1.2#3388ec44ec402489dc38f081a91a6c21%1702372583.775",
         "openssl/3.2.0#30b857fa0927b5917fe3463c8c0ba38f%1704964830.849",
         "libyaml/0.2.5#67a8e4c752b3a452c4796ddc90589f74%1676469565.275",
         "libffi/3.4.4#35eb63842b505824b70aedc1baefc916%1682741110.044",
+        "gmp/6.3.0#df20ffb6d21c34d67704305bcd1dea9e%1698225617.026",
         "gmp/6.2.1#560eab30a8f52beae2cef5ff26cdd61c%1698225617.238"
     ],
     "build_requires": [

@@ -342,9 +342,9 @@ jobs:
         pip install rich
         python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs_x86_64.zip
 
-    - name: Upload the logs when failed
+    - name: Upload the logs
       uses: actions/upload-artifact@v4
-      if: ${{ failure() }}
+      if: ${{ always() }}
       with:
         name: "conan-logs-x86_64-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
         path: logs_x86_64.zip
