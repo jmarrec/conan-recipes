@@ -9,7 +9,7 @@ from rich.console import Console
 
 def get_build_folder(content: str) -> Optional[Path]:
     """Find the location of the build folder."""
-    RE_BUILD_FOLDER = re.compile(": Build folder (.*)")
+    RE_BUILD_FOLDER = re.compile("ruby.*: Build folder (.*)")
     if m := RE_BUILD_FOLDER.search(content):
         return Path(m.groups()[0])
 
