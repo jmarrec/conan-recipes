@@ -84,3 +84,6 @@ patches:
     - patch_file: "patches/0008-debug-mkmf-3.1.0.patch"
       patch_description: "Make mkmf very verbose to diagnostic native extensions and pkg-config related linking failures"
       patch_type: "portability"
+    - patch_file: "patches/0009-backport-add-with-gmp-dir-3.1.0.patch"
+      patch_description: "backport add --with-gmp-dir"
+      patch_type: "backport"
