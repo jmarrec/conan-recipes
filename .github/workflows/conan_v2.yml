@@ -294,13 +294,13 @@ jobs:
         echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
         echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan_command="conan create . ruby/${{ matrix.recipe_version }}@ --test-folder test_v1_package -o '*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True"
+          conan_command="--test-folder test_v1_package -o '*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True . ruby/${{ matrix.recipe_version }}@"
         else
-          conan_command="conan create -s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+          conan_command="-s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
         fi
         echo "conan_command=$conan_command"
         set +e
-        $conan_command 2> >(tee conan_output >&2)
+        conan create $conan_command 2> >(tee conan_output >&2)
         code=${PIPESTATUS[0]}
         set -e
         echo $code
