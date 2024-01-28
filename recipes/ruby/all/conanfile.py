@@ -156,6 +156,10 @@ class RubyConan(ConanFile):
         if self.options.with_enable_load_relative:
             tc.configure_args.append("--enable-load-relative")
 
+        if self.settings.build_type == "Debug":
+            tc.configure_args.append("--enable-debug-env")
+            # tc.configure_args.append('optflags="-O0 -fno-omit-frame-pointer"')
+
         # Ruby doesn't respect the --with-gmp-dir for eg. After removal of libgmp-dev on conanio/gcc10 build failed
         opt_dirs = []
 
