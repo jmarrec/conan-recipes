@@ -128,9 +128,9 @@ if __name__ == "__main__":
     console = Console()
     build_folder = get_build_folder(content)
     if build_folder is None:
-        console.print("[yellow bold]Build folder not found, was the package actually built?[/]")
+        console.print(":collision: [yellow bold]Build folder not found, was the package actually built?[/]")
         exit(0)
-    print(f"Found Build folder: {str(build_folder)}")
+    console.print(f"[green]Found Build folder[/]: {str(build_folder)}")
 
     all_logs = find_interesting_logs(build_folder=build_folder)
     zip_logs(all_logs=all_logs, zip_path=args.zip_file)
@@ -139,10 +139,10 @@ if __name__ == "__main__":
 
     failed_exts = get_failed_extensions(content)
     if not failed_exts:
-        print("No failed extensions")
+        console.print(":white_check_mark: [green bold]No failed extensions[/]")
         exit(0)
 
-    console.print(f"[red bold]There are {len(failed_exts)} failed extensions[/]")
+    console.print(f":cross_mark: [red bold]There are {len(failed_exts)} failed extensions[/]")
     for failed_ext in failed_exts:
         print("=" * 80)
         console.print(failed_ext)

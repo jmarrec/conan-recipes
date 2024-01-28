@@ -291,8 +291,6 @@ jobs:
       shell: bash
       working-directory: recipes/ruby/all
       run: |
-        echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
-        echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           conan_command="--test-folder test_v1_package -o '*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True . ruby/${{ matrix.recipe_version }}@"
         else
@@ -323,7 +321,12 @@ jobs:
             conan graph explain $conan_command
           fi
         fi
-        echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | x86_64 | $ICON |" >> $GITHUB_STEP_SUMMARY
+        # Too many runs, just do a step summary if it fails
+        if [ $code -ne 0 ];
+          echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
+          echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | x86_64 | $ICON |" >> $GITHUB_STEP_SUMMARY
+        fi
         if [ $code -ne 6 ]; then
           exit "$code"
         fi
@@ -378,7 +381,12 @@ jobs:
         if grep -Fq "conan graph explain" conan_output; then
             conan graph explain $conan_command
         fi
-        echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | armv8 | $ICON |" >> $GITHUB_STEP_SUMMARY
+        # Too many runs, just do a step summary if it fails
+        if [ $code -ne 0 ];
+          echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
+          echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | armv8 | $ICON |" >> $GITHUB_STEP_SUMMARY
+        fi
         if [ $code -ne 6 ]; then
           exit "$code"
         fi
@@ -392,11 +400,11 @@ jobs:
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
           conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
+          # Clean: Remove non-critical folders from the cache
+          conan remove "*" -s -b -f
         else
           conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
           conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
+          conan cache clean --source --build --temp
         fi
 
-        # Clean: Remove non-critical folders from the cache
-        conan remove "*" -s -b -f || true  # v1
-        conan cache clean --source --build --temp || true # v2
