@@ -3,17 +3,15 @@ import os
 import re
 import zipfile
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import List
+from typing import List, Optional
 from rich.console import Console
 
 
-def get_build_folder(content: str) -> Path:
+def get_build_folder(content: str) -> Optional[Path]:
     """Find the location of the build folder."""
     RE_BUILD_FOLDER = re.compile(": Build folder (.*)")
     if m := RE_BUILD_FOLDER.search(content):
         return Path(m.groups()[0])
-
-    raise ValueError("Couldn't find build folder")
 
 
 def find_interesting_logs(build_folder: Path) -> List[Path]:
@@ -127,7 +125,11 @@ if __name__ == "__main__":
     # exit(0)
     content = Path(args.build_log_file).read_text()
 
+    console = Console()
     build_folder = get_build_folder(content)
+    if build_folder is None:
+        console.print("[yellow bold]Build folder not found, was the package actually built?[/]")
+        exit(0)
     print(f"Found Build folder: {str(build_folder)}")
 
     all_logs = find_interesting_logs(build_folder=build_folder)
@@ -142,7 +144,6 @@ if __name__ == "__main__":
         print("No failed extensions")
         exit(0)
 
-    console = Console()
     console.print(f"[red bold]There are {len(failed_exts)} failed extensions[/]")
     for failed_ext in failed_exts:
         print("=" * 80)
