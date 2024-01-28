@@ -351,6 +351,7 @@ jobs:
       with:
         name: "conan-logs-x86_64-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
         path: logs_x86_64.zip
+        if-no-files-found: ignore
 
     - name: build armv8
       if: matrix.build_name == 'apple-clang-15'
@@ -403,6 +404,7 @@ jobs:
       with:
         name: "conan-logs-armv8-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
         path: logs_armv8.zip
+        if-no-files-found: ignore
 
     - name: upload
       shell: bash
