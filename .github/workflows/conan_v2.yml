@@ -415,10 +415,10 @@ jobs:
           conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
           conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
           # Clean: Remove non-critical folders from the cache
-          conan remove "*" -s -b -f
+          conan remove "*" --src --builds --system-reqs -f
         else
           conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
           conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
-          conan cache clean --source --build --temp
+          conan cache clean --source --build --download --temp
         fi
 
