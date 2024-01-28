@@ -336,6 +336,19 @@ jobs:
         name: "conan-output-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
         path: recipes/ruby/all/conan_output
 
+    - name: Check for failed ext and report
+      if: ${{ always() }}
+      run: |
+        pip install rich
+        python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs_x86_64.zip
+
+    - name: Check for failed ext and report
+      uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      with:
+        name: "conan-logs-x86_64-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
+        path: logs_x86_64.zip
+
     - name: build armv8
       if: matrix.build_name == 'apple-clang-15'
       shell: bash
