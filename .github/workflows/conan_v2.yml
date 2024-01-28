@@ -342,7 +342,7 @@ jobs:
         pip install rich
         python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs_x86_64.zip
 
-    - name: Check for failed ext and report
+    - name: Upload the logs when failed
       uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:

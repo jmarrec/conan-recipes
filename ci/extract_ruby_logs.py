@@ -137,8 +137,6 @@ if __name__ == "__main__":
     size_mb = args.zip_file.stat().st_size / (1024**2)
     print(f"Zipped the logs to {args.zip_file.absolute()} ({size_mb:.2f} MB)")
 
-    content = Path('tmp/conan-output-ruby_3.1.0-msvc-2019-Release').read_text()
-
     failed_exts = get_failed_extensions(content)
     if not failed_exts:
         print("No failed extensions")
