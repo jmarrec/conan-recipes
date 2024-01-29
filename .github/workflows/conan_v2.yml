@@ -406,19 +406,27 @@ jobs:
         path: logs_armv8.zip
         if-no-files-found: ignore
 
-    - name: upload
+    - name: Upload to remote
       shell: bash
+      if: ${{ github.event_name == 'push' && (contains(github.ref, 'refs/tags') || github.ref == 'refs/heads/main') }}
       run: |
         set -x
-
         if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
           conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
           conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
-          # Clean: Remove non-critical folders from the cache
-          conan remove "*" --src --builds --system-reqs -f
         else
           conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
           conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
+        fi
+
+    - name: Remove non-critical folders from the cache
+      shell: bash
+      if: ${{ contains(github.ref, 'refs/tags') || ((github.event_name == 'push' &&  github.ref == 'refs/heads/main')) }}
+      run: |
+        set -x
+        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
+          conan remove "*" --src --builds --system-reqs -f
+        else
           conan cache clean --source --build --download --temp
         fi
 
