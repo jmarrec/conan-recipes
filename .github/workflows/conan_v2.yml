@@ -256,7 +256,7 @@ jobs:
             conan remote add --force --insecure nrel-v2 http://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
           fi
         else
-          conan remote add --force nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 True # ${{ secrets.CONAN_UPLOAD }}
+          conan remote add --force nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         fi
         conan remote list
 
