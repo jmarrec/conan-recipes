@@ -10,7 +10,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  VERIFY_SSL: false   # TEMP, NREL's artifactory's SSL cert has expired
+  VERIFY_SSL: true
 
 jobs:
   build:
