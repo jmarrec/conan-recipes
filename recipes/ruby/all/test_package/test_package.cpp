@@ -9,6 +9,32 @@
 #  undef RUBY_STATIC_LINKED_EXT2
 #endif
 
+#ifdef RUBY_STATIC_RUBY
+extern "C"
+{
+  // static void Init_builtin_prelude(void);
+  // void Init_builtin_gem_prelude(void);
+
+  void Init_builtin_array(void);
+  void Init_builtin_ast(void);
+  void Init_builtin_dir(void);
+  void Init_builtin_gc(void);
+  void Init_builtin_io(void);
+  void Init_builtin_kernel(void);
+  void Init_builtin_marshal(void);
+  void Init_builtin_nilclass(void);
+  void Init_builtin_numeric(void);
+  void Init_builtin_pack(void);
+  void Init_builtin_ractor(void);
+  void Init_builtin_timev(void);
+  void Init_builtin_trace_point(void);
+  void Init_builtin_warning(void);
+  void Init_builtin_symbol(void);
+  void Init_builtin_thread_sync(void);
+  // void Init_builtin_yjit(void);
+}
+#endif
+
 int main(int argc, char* argv[]) {
   ruby_sysinit(&argc, &argv);
   RUBY_INIT_STACK;
@@ -35,6 +61,28 @@ int main(int argc, char* argv[]) {
 #endif
 
 #ifdef RUBY_STATIC_RUBY
+
+  Init_builtin_gc();
+  Init_builtin_ractor();
+  Init_builtin_numeric();
+  Init_builtin_io();
+  Init_builtin_dir();
+  Init_builtin_ast();
+  Init_builtin_trace_point();
+  Init_builtin_pack();
+  Init_builtin_warning();
+  Init_builtin_array();
+  Init_builtin_kernel();
+  Init_builtin_symbol();
+  Init_builtin_timev();
+  Init_builtin_thread_sync();
+  // Init_builtin_yjit();
+  Init_builtin_nilclass();
+  Init_builtin_marshal();
+
+  // Init_builtin_prelude();
+  // Init_builtin_gem_prelude();
+
   rb_provide("bigdecimal");
   rb_provide("bigdecimal.so");
 #else
@@ -45,6 +93,7 @@ int main(int argc, char* argv[]) {
        begin
          (require 'bigdecimal')
          puts "I can correctly load one of the extension gems - bigdecimal"
+         puts "Dir.glob=#{Dir.glob('*')}"
        rescue Exception => e
          puts
          puts "Error: #{e.message}"
