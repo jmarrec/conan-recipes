@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 
   // Init_builtin_prelude();
   // Init_builtin_gem_prelude();
+  rb_provide("rbconfig");
 
   rb_provide("bigdecimal");
   rb_provide("bigdecimal.so");
@@ -98,12 +99,23 @@ int main(int argc, char* argv[]) {
 
   rb_eval_string(R"(
        begin
-         (require 'bigdecimal')
-         puts "I can correctly load one of the extension gems - bigdecimal"
+         puts "I can correctly load call Dir builtin"
          puts "Dir.glob=#{Dir.glob('*')}"
        rescue Exception => e
          puts
-         puts "Error: #{e.message}"
+         puts "#{e.class}: #{e.message}"
+         puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
+         raise
+       end
+     )");
+
+  rb_eval_string(R"(
+       begin
+         (require 'bigdecimal')
+         puts "I can correctly load one of the extension gems - bigdecimal"
+       rescue Exception => e
+         puts
+         puts "#{e.class}: #{e.message}"
          puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
          raise
        end

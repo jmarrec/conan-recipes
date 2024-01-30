@@ -11,6 +11,7 @@ from conan.tools.scm import Version
 
 import glob
 import os
+from pathlib import Path
 
 required_conan_version = ">=1.53"
 
@@ -262,6 +263,22 @@ class RubyConan(ConanFile):
                 copy(self, "*.a", src=dirname, dst=os.path.join(self.package_folder, dst), keep_path=True)
                 copy(self, "*.lib", src=dirname, dst=os.path.join(self.package_folder, dst), keep_path=True)
 
+    def _collect_static_ext_enc_libs(self):
+        libext = "lib" if self.settings.os == "Windows" else "a"
+
+        # enc: at root
+        self.cpp_info.components["enc"].libdirs = 'lib/enc'
+        self.cpp_info.components["enc"].libs = collect_libs(self, folder=os.path.join(self.package_folder, 'lib', 'enc'))
+        self.cpp_info.components["enc"].set_property("cmake_target_name", "Ruby::Encodings_libs")
+
+        ext_lib_dir = Path(self.package_folder) / "lib"  / "ext"
+        # ext_dirs = [x.relative_to(ext_lib_dir) for x in ext_lib_dir.iterdir()]
+        ext_libs = [x.relative_to(self.package_folder) for x in ext_lib_dir.glob(f"**/*.{libext}")]
+        ext_dirs = list(set([str(x.parent) for x in ext_libs]))
+        self.cpp_info.components["ext"].libdirs = ext_dirs
+        self.cpp_info.components["ext"].libs = [str(x.with_suffix('')) for x in ext_libs]
+        self.cpp_info.components["ext"].set_property("cmake_target_name", "Ruby::Extension_libs")
+
     def package_info(self):
         version = Version(self.version)
         self.cpp_info.set_property("cmake_find_mode", "both")
@@ -277,12 +294,16 @@ class RubyConan(ConanFile):
             os.path.join(self.package_folder, "include", f"ruby-{version.major}.{version.minor}.0"),
             os.path.dirname(os.path.dirname(config_file)),
         ]
+        # Collect libruby itself
         self.cpp_info.libs = collect_libs(self)
         if is_msvc(self):
             if self.options.shared:
                 self.cpp_info.libs = list(filter(lambda l: not l.endswith("-static"), self.cpp_info.libs))
             else:
                 self.cpp_info.libs = list(filter(lambda l: l.endswith("-static"), self.cpp_info.libs))
+
+        if not self.options.shared and self.options.with_static_linked_ext:
+            self._collect_static_ext_enc_libs()
 
         if self.settings.os in ("FreeBSD", "Linux"):
             self.cpp_info.system_libs = ["dl", "pthread", "rt", "m", "crypt", "util"]
