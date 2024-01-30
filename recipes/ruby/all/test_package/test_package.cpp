@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/version.h>
 #include <iostream>
 #include <string>
 
@@ -40,6 +41,8 @@ int main(int argc, char* argv[]) {
   RUBY_INIT_STACK;
   ruby_init();
 
+  std::cout << "RUBY_API_VERSION_MAJOR=" << RUBY_API_VERSION_MAJOR << ", RUBY_API_VERSION_MINOR=" << RUBY_API_VERSION_MINOR
+            << ", RUBY_API_VERSION_TEENY=" << RUBY_API_VERSION_TEENY << '\n';
   rb_eval_string("puts 'Hello, ruby!'");
 
 #ifdef RUBY_STATIC_RUBY
@@ -73,9 +76,13 @@ int main(int argc, char* argv[]) {
   Init_builtin_warning();
   Init_builtin_array();
   Init_builtin_kernel();
+#  if RUBY_API_VERSION_MAJOR == 3 && RUBY_API_VERSION_MINOR > 1
   Init_builtin_symbol();
+#  endif
   Init_builtin_timev();
+#  if RUBY_API_VERSION_MAJOR == 3 && RUBY_API_VERSION_MINOR > 1
   Init_builtin_thread_sync();
+#  endif
   // Init_builtin_yjit();
   Init_builtin_nilclass();
   Init_builtin_marshal();
