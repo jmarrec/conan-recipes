@@ -59,6 +59,12 @@ patches:
     - patch_file: "patches/0008-debug-mkmf-3.2.2.patch"
       patch_description: "Make mkmf very verbose to diagnostic native extensions and pkg-config related linking failures"
       patch_type: "portability"
+    #- patch_file: "patches/do-not-link-dmyext-initobjs-when-static.patch"
+    #patch_description: "Do not want to link to INITOBJS when ext static, or it overrides Init_ext / Init_enc"
+    #patch_type: "portability"
+    - patch_file: "patches/temp_patch.patch"
+      patch_description: "Debug statically linked ext"
+      patch_type: "portability"
   "3.1.0":
     - patch_file: "patches/0001-darwin-includedir-3.1.0.patch"
       patch_description: "Remove SDKROOT on macOS"

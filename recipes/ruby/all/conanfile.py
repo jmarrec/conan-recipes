@@ -8,6 +8,7 @@ from conan.tools.gnu import Autotools, PkgConfigDeps, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import check_min_vs, is_msvc, is_msvc_static_runtime, msvc_runtime_flag, unix_path, VCVars
 from conan.tools.scm import Version
+from pathlib import Path
 
 import glob
 import os
@@ -215,6 +216,10 @@ class RubyConan(ConanFile):
         if Version(self.version) < "3.2.0":
             replace_in_file(self, os.path.join(self.source_folder, "gems", "bundled_gems"), "rbs 2.0.0", "rbs 3.1.0")
             replace_in_file(self, os.path.join(self.source_folder, "gems", "bundled_gems"), "debug 1.4.0", "debug 1.6.3")
+        if not self.options.shared and self.options.with_static_linked_ext:
+            replace_in_file(self, os.path.join(self.source_folder, "ext", "Setup"), "#", "")
+            if self.settings.os != "Windows":
+                replace_in_file(self, os.path.join(self.source_folder, "ext", "Setup"), "win32", "#win32")
 
     def build(self):
         self._patch_sources()
@@ -236,6 +241,8 @@ class RubyConan(ConanFile):
             self.run("nmake")
         else:
             autotools.make()
+            if self.options.get_safe("with_static_linked_ext"):
+                autotools.make(target="final-libruby_a")
 
     def package(self):
         for file in ["COPYING", "BSDL"]:

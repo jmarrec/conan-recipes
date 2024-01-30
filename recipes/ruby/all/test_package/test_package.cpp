@@ -16,6 +16,7 @@ extern "C"
   // static void Init_builtin_prelude(void);
   // void Init_builtin_gem_prelude(void);
 
+  /*
   void Init_builtin_array(void);
   void Init_builtin_ast(void);
   void Init_builtin_dir(void);
@@ -33,13 +34,39 @@ extern "C"
   void Init_builtin_symbol(void);
   void Init_builtin_thread_sync(void);
   // void Init_builtin_yjit(void);
+*/
+  void ruby_gc_set_params(void);
+  void Init_ext(void);
+  void rb_call_builtin_inits(void);
+  void Init_builtin_features(void);
+  void Init_enc(void);
 }
 #endif
 
 int main(int argc, char* argv[]) {
+  std::cout << "Calling ruby_sysinit\n";
   ruby_sysinit(&argc, &argv);
+  std::cout << "Calling RUBY_INIT_STACK\n";
   RUBY_INIT_STACK;
+  std::cout << "Calling ruby_init\n";
   ruby_init();
+
+  std::cout << "Calling ruby_gc_set_params\n";
+  ruby_gc_set_params();
+  std::cout << "Calling ruby_init_loadpath\n";
+  ruby_init_loadpath();
+  std::cout << "Calling Init_enc\n";
+  Init_enc();
+  std::cout << "Calling Init_ext\n";
+  Init_ext(); /* load statically linked extensions before rubygems */
+  std::cout << "Calling rb_call_builtin_inits\n";
+  rb_call_builtin_inits();
+  std::cout << "Calling Init_builtin_features\n";
+  // ruby_init_prelude();
+  Init_builtin_features();
+
+  std::cout << "Calling Init_ext\n";
+  Init_ext(); /* load statically linked extensions before rubygems */
 
   std::cout << "RUBY_API_VERSION_MAJOR=" << RUBY_API_VERSION_MAJOR << ", RUBY_API_VERSION_MINOR=" << RUBY_API_VERSION_MINOR
             << ", RUBY_API_VERSION_TEENY=" << RUBY_API_VERSION_TEENY << '\n';
@@ -65,6 +92,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef RUBY_STATIC_RUBY
 
+  /*
   Init_builtin_gc();
   Init_builtin_ractor();
   Init_builtin_numeric();
@@ -89,21 +117,46 @@ int main(int argc, char* argv[]) {
 
   // Init_builtin_prelude();
   // Init_builtin_gem_prelude();
+  Init_ext();
+*/
 
-  rb_provide("bigdecimal");
-  rb_provide("bigdecimal.so");
+  rb_eval_string(R"(
+       begin
+         puts "I can correctly load call Dir builtin"
+         puts "Dir.glob=#{Dir.glob('*')}"
+       rescue Exception => e
+         puts
+         puts "#{e.class}: #{e.message}"
+         puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
+         raise
+       end
+     )");
+
+  rb_provide("rbconfig");
+
 #else
   ruby_init_loadpath();
 #endif
 
   rb_eval_string(R"(
        begin
-         (require 'bigdecimal')
-         puts "I can correctly load one of the extension gems - bigdecimal"
-         puts "Dir.glob=#{Dir.glob('*')}"
+         (require 'rbconfig')
+         puts "I can correctly load rbconfig"
        rescue Exception => e
          puts
-         puts "Error: #{e.message}"
+         puts "#{e.class}: #{e.message}"
+         puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
+         raise
+       end
+     )");
+
+  rb_eval_string(R"(
+       begin
+         require 'bigdecimal'
+         puts "I can correctly load one of the extension gems - bigdecimal"
+       rescue Exception => e
+         puts
+         puts "#{e.class}: #{e.message}"
          puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
          raise
        end
