@@ -267,7 +267,7 @@ class RubyConan(ConanFile):
         libext = "lib" if self.settings.os == "Windows" else "a"
 
         # enc: at root
-        self.cpp_info.components["enc"].libdirs = 'lib/enc'
+        self.cpp_info.components["enc"].libdirs = ['lib/enc']
         self.cpp_info.components["enc"].libs = collect_libs(self, folder=os.path.join(self.package_folder, 'lib', 'enc'))
         self.cpp_info.components["enc"].set_property("cmake_target_name", "Ruby::Encodings_libs")
 
@@ -278,14 +278,186 @@ class RubyConan(ConanFile):
         self.cpp_info.components["ext"].libdirs = ext_dirs
         self.cpp_info.components["ext"].libs = [str(x.with_suffix('')) for x in ext_libs]
         self.cpp_info.components["ext"].set_property("cmake_target_name", "Ruby::Extension_libs")
+        breakpoint()
 
     def package_info(self):
         version = Version(self.version)
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "Ruby")
-        self.cpp_info.set_property("cmake_target_name", "Ruby::Ruby")
         self.cpp_info.set_property("pkg_config_name", "ruby")
         self.cpp_info.set_property("pkg_config_aliases", [f"ruby-{version.major}.{version.minor}"])
+
+
+        self.cpp_info.set_property("cmake_target_name", "Ruby::Ruby")
+
+        self.cpp_info.components["libruby"].set_property("cmake_target_name", "Ruby::Ruby")
+        self.cpp_info.components["libruby"].libs =  collect_libs(self)
+
+        # ===# === bigdecimal/bigdecimal.a # =====
+        self.cpp_info.components["bigdecimal"].libdirs = ["lib/ext/bigdecimal"]
+        self.cpp_info.components["bigdecimal"].libs = ["bigdecimal"]
+        self.cpp_info.components["bigdecimal"].set_property("cmake_target_name", "Ruby::Ext::bigdecimal")
+        # TODO: not sure that's correct
+        if self.options.get_safe("with_gmp"):
+            self.cpp_info.components["fiddle"].requires.append("gmp::gmp")
+        # ===# === cgi/escape/escape.a # =====
+        self.cpp_info.components["cgi/escape"].libdirs = ["lib/ext/cgi/escape"]
+        self.cpp_info.components["cgi/escape"].libs = ["escape"]
+        self.cpp_info.components["cgi/escape"].set_property("cmake_target_name", "Ruby::Ext::cgi_escape")
+        # ===# === continuation/continuation.a # =====
+        self.cpp_info.components["continuation"].libdirs = ["lib/ext/continuation"]
+        self.cpp_info.components["continuation"].libs = ["continuation"]
+        self.cpp_info.components["continuation"].set_property("cmake_target_name", "Ruby::Ext::continuation")
+        # ===# === coverage/coverage.a # =====
+        self.cpp_info.components["coverage"].libdirs = ["lib/ext/coverage"]
+        self.cpp_info.components["coverage"].libs = ["coverage"]
+        self.cpp_info.components["coverage"].set_property("cmake_target_name", "Ruby::Ext::coverage")
+        # ===# === date/date_core.a # =====
+        self.cpp_info.components["date"].libdirs = ["lib/ext/date"]
+        self.cpp_info.components["date"].libs = ["date_core"]
+        self.cpp_info.components["date"].set_property("cmake_target_name", "Ruby::Ext::date")
+        # ===# === digest/bubblebabble/bubblebabble.a # =====
+        self.cpp_info.components["digest/bubblebabble"].libdirs = ["lib/ext/digest/bubblebabble"]
+        self.cpp_info.components["digest/bubblebabble"].libs = ["bubblebabble"]
+        self.cpp_info.components["digest/bubblebabble"].set_property("cmake_target_name", "Ruby::Ext::digest_bubblebabble")
+        # ===# === digest/digest.a # =====
+        self.cpp_info.components["digest"].libdirs = ["lib/ext/digest"]
+        self.cpp_info.components["digest"].libs = ["digest"]
+        self.cpp_info.components["digest"].set_property("cmake_target_name", "Ruby::Ext::digest")
+        # ===# === digest/md5/md5.a # =====
+        self.cpp_info.components["digest/md5"].libdirs = ["lib/ext/digest/md5"]
+        self.cpp_info.components["digest/md5"].libs = ["md5"]
+        self.cpp_info.components["digest/md5"].set_property("cmake_target_name", "Ruby::Ext::digest_md5")
+        # ===# === digest/rmd160/rmd160.a # =====
+        self.cpp_info.components["digest/rmd160"].libdirs = ["lib/ext/digest/rmd160"]
+        self.cpp_info.components["digest/rmd160"].libs = ["rmd160"]
+        self.cpp_info.components["digest/rmd160"].set_property("cmake_target_name", "Ruby::Ext::digest_rmd160")
+        # ===# === digest/sha1/sha1.a # =====
+        self.cpp_info.components["digest/sha1"].libdirs = ["lib/ext/digest/sha1"]
+        self.cpp_info.components["digest/sha1"].libs = ["sha1"]
+        self.cpp_info.components["digest/sha1"].set_property("cmake_target_name", "Ruby::Ext::digest_sha1")
+        # ===# === digest/sha2/sha2.a # =====
+        self.cpp_info.components["digest/sha2"].libdirs = ["lib/ext/digest/sha2"]
+        self.cpp_info.components["digest/sha2"].libs = ["sha2"]
+        self.cpp_info.components["digest/sha2"].set_property("cmake_target_name", "Ruby::Ext::digest_sha2")
+        # ===# === erb/escape/escape.a # =====
+        self.cpp_info.components["erb/escape"].libdirs = ["lib/ext/erb/escape"]
+        self.cpp_info.components["erb/escape"].libs = ["escape"]
+        self.cpp_info.components["erb/escape"].set_property("cmake_target_name", "Ruby::Ext::erb_escape")
+        # ===# === etc/etc.a # =====
+        self.cpp_info.components["etc"].libdirs = ["lib/ext/etc"]
+        self.cpp_info.components["etc"].libs = ["etc"]
+        self.cpp_info.components["etc"].set_property("cmake_target_name", "Ruby::Ext::etc")
+        # ===# === fcntl/fcntl.a # =====
+        self.cpp_info.components["fcntl"].libdirs = ["lib/ext/fcntl"]
+        self.cpp_info.components["fcntl"].libs = ["fcntl"]
+        self.cpp_info.components["fcntl"].set_property("cmake_target_name", "Ruby::Ext::fcntl")
+        # ===# === fiddle/fiddle.a # =====
+        self.cpp_info.components["fiddle"].libdirs = ["lib/ext/fiddle"]
+        self.cpp_info.components["fiddle"].libs = ["fiddle"]
+        self.cpp_info.components["fiddle"].set_property("cmake_target_name", "Ruby::Ext::fiddle")
+        if self.options.get_safe("with_libffi"):
+            self.cpp_info.components["fiddle"].requires.append("libffi::libffi")
+
+        # ===# === io/console/console.a # =====
+        self.cpp_info.components["io/console"].libdirs = ["lib/ext/io/console"]
+        self.cpp_info.components["io/console"].libs = ["console"]
+        self.cpp_info.components["io/console"].set_property("cmake_target_name", "Ruby::Ext::io_console")
+        # ===# === io/nonblock/nonblock.a # =====
+        self.cpp_info.components["io/nonblock"].libdirs = ["lib/ext/io/nonblock"]
+        self.cpp_info.components["io/nonblock"].libs = ["nonblock"]
+        self.cpp_info.components["io/nonblock"].set_property("cmake_target_name", "Ruby::Ext::io_nonblock")
+        # ===# === io/wait/wait.a # =====
+        self.cpp_info.components["io/wait"].libdirs = ["lib/ext/io/wait"]
+        self.cpp_info.components["io/wait"].libs = ["wait"]
+        self.cpp_info.components["io/wait"].set_property("cmake_target_name", "Ruby::Ext::io_wait")
+
+        # ===# === json/generator/generator.a # =====
+        self.cpp_info.components["json/generator"].libdirs = ["lib/ext/json/generator"]
+        self.cpp_info.components["json/generator"].libs = ["generator"]
+        self.cpp_info.components["json/generator"].set_property("cmake_target_name", "Ruby::Ext::json_generator")
+        # ===# === json/parser/parser.a # =====
+        self.cpp_info.components["json/parser"].libdirs = ["lib/ext/json/parser"]
+        self.cpp_info.components["json/parser"].libs = ["parser"]
+        self.cpp_info.components["json/parser"].set_property("cmake_target_name", "Ruby::Ext::json_parser")
+
+        # ===# === monitor/monitor.a # =====
+        self.cpp_info.components["monitor"].libdirs = ["lib/ext/monitor"]
+        self.cpp_info.components["monitor"].libs = ["monitor"]
+        self.cpp_info.components["monitor"].set_property("cmake_target_name", "Ruby::Ext::monitor")
+        # ===# === nkf/nkf.a # =====
+        self.cpp_info.components["nkf"].libdirs = ["lib/ext/nkf"]
+        self.cpp_info.components["nkf"].libs = ["nkf"]
+        self.cpp_info.components["nkf"].set_property("cmake_target_name", "Ruby::Ext::nkf")
+        # ===# === objspace/objspace.a # =====
+        self.cpp_info.components["objspace"].libdirs = ["lib/ext/objspace"]
+        self.cpp_info.components["objspace"].libs = ["objspace"]
+        self.cpp_info.components["objspace"].set_property("cmake_target_name", "Ruby::Ext::objspace")
+        # ===# === openssl/openssl.a # =====
+        self.cpp_info.components["openssl"].libdirs = ["lib/ext/openssl"]
+        self.cpp_info.components["openssl"].libs = ["openssl"]
+        self.cpp_info.components["openssl"].set_property("cmake_target_name", "Ruby::Ext::openssl")
+        self.cpp_info.components["openssl"].requires.append("openssl::openssl")
+
+        # ===# === pathname/pathname.a # =====
+        self.cpp_info.components["pathname"].libdirs = ["lib/ext/pathname"]
+        self.cpp_info.components["pathname"].libs = ["pathname"]
+        self.cpp_info.components["pathname"].set_property("cmake_target_name", "Ruby::Ext::pathname")
+        # ===# === psych/psych.a # =====
+        self.cpp_info.components["psych"].libdirs = ["lib/ext/psych"]
+        self.cpp_info.components["psych"].libs = ["psych"]
+        self.cpp_info.components["psych"].set_property("cmake_target_name", "Ruby::Ext::psych")
+        if self.options.get_safe("with_libyaml"):
+            self.cpp_info.components["psych"].requires.append("libyaml::libyaml")
+
+        # ===# === pty/pty.a # =====
+        self.cpp_info.components["pty"].libdirs = ["lib/ext/pty"]
+        self.cpp_info.components["pty"].libs = ["pty"]
+        self.cpp_info.components["pty"].set_property("cmake_target_name", "Ruby::Ext::pty")
+        # ===# === racc/cparse/cparse.a # =====
+        self.cpp_info.components["racc/cparse"].libdirs = ["lib/ext/racc/cparse"]
+        self.cpp_info.components["racc/cparse"].libs = ["cparse"]
+        self.cpp_info.components["racc/cparse"].set_property("cmake_target_name", "Ruby::Ext::racc_cparse")
+        # ===# === rbconfig/sizeof/sizeof.a # =====
+        self.cpp_info.components["rbconfig/sizeof"].libdirs = ["lib/ext/rbconfig/sizeof"]
+        self.cpp_info.components["rbconfig/sizeof"].libs = ["sizeof"]
+        self.cpp_info.components["rbconfig/sizeof"].set_property("cmake_target_name", "Ruby::Ext::rbconfig_sizeof")
+        # ===# === readline/readline.a # =====
+        if self.options.get_safe("with_readline"):
+            self.cpp_info.components["readline"].libdirs = ["lib/ext/readline"]
+            self.cpp_info.components["readline"].libs = ["readline"]
+            self.cpp_info.components["readline"].set_property("cmake_target_name", "Ruby::Ext::readline")
+            self.cpp_info.components["readline"].requires.append("readline::readline")
+
+        # ===# === ripper/ripper.a # =====
+        self.cpp_info.components["ripper"].libdirs = ["lib/ext/ripper"]
+        self.cpp_info.components["ripper"].libs = ["ripper"]
+        self.cpp_info.components["ripper"].set_property("cmake_target_name", "Ruby::Ext::ripper")
+        # ===# === socket/socket.a # =====
+        self.cpp_info.components["socket"].libdirs = ["lib/ext/socket"]
+        self.cpp_info.components["socket"].libs = ["socket"]
+        self.cpp_info.components["socket"].set_property("cmake_target_name", "Ruby::Ext::socket")
+        # ===# === stringio/stringio.a # =====
+        self.cpp_info.components["stringio"].libdirs = ["lib/ext/stringio"]
+        self.cpp_info.components["stringio"].libs = ["stringio"]
+        self.cpp_info.components["stringio"].set_property("cmake_target_name", "Ruby::Ext::stringio")
+        # ===# === strscan/strscan.a # =====
+        self.cpp_info.components["strscan"].libdirs = ["lib/ext/strscan"]
+        self.cpp_info.components["strscan"].libs = ["strscan"]
+        self.cpp_info.components["strscan"].set_property("cmake_target_name", "Ruby::Ext::strscan")
+        # ===# === syslog/syslog.a # =====
+        self.cpp_info.components["syslog"].libdirs = ["lib/ext/syslog"]
+        self.cpp_info.components["syslog"].libs = ["syslog"]
+        self.cpp_info.components["syslog"].set_property("cmake_target_name", "Ruby::Ext::syslog")
+        # ===# === zlib/zlib.a # =====
+        self.cpp_info.components["ruby_zlib"].libdirs = ["lib/ext/zlib"]
+        self.cpp_info.components["ruby_zlib"].libs = ["zlib"]
+        self.cpp_info.components["ruby_zlib"].set_property("cmake_target_name", "Ruby::Ext::zlib")
+        self.cpp_info.components["ruby_zlib"].requires.append("zlib::zlib")
+
+        # workaround to have all components in CMakeDeps of downstream recipes
+        self.cpp_info.set_property("cmake_target_name", "Ruby::Ruby")
+
 
         config_file = glob.glob(os.path.join(self.package_folder, "include", "**", "ruby", "config.h"), recursive=True)[
             0
@@ -302,8 +474,8 @@ class RubyConan(ConanFile):
             else:
                 self.cpp_info.libs = list(filter(lambda l: l.endswith("-static"), self.cpp_info.libs))
 
-        if not self.options.shared and self.options.with_static_linked_ext:
-            self._collect_static_ext_enc_libs()
+        #if not self.options.shared and self.options.with_static_linked_ext:
+        #    self._collect_static_ext_enc_libs()
 
         if self.settings.os in ("FreeBSD", "Linux"):
             self.cpp_info.system_libs = ["dl", "pthread", "rt", "m", "crypt", "util"]
