@@ -175,7 +175,9 @@ class RubyConan(ConanFile):
         if opt_dirs:
             if self.settings.os == "Windows":
                 sep = ";"
-                tc.configure_args.append(f'--with-opt-dir="{sep.join(opt_dirs)}"')
+                # TODO: figure out the quoting issues, make it portable between git bash (only one supported now) and
+                # powershell
+                tc.configure_args.append(f'--with-opt-dir={sep.join(opt_dirs)}')
             else:
                 sep = ":"
                 tc.configure_args.append(f'--with-opt-dir={sep.join(opt_dirs)}')
@@ -203,9 +205,12 @@ class RubyConan(ConanFile):
                 tc.ldflags.append("-debug")
             tc.build_type_flags = [f if f != "-O2" else self._msvc_optflag for f in tc.build_type_flags]
 
-            tc.configure_args.append("--without-ext=+,dbm,gdbm,readline")
+            tc.configure_args.append("--without-ext=\"+,-test-,dbm,gdbm,readline,io/console,syslog,pty\"")
             if Version(self.version) < "3.2.0":
                 tc.configure_args.append("--enable-bundled-libffi")
+        #else:
+        #    # Note: The option on Unix is with-out-ext, not without-ext
+        #    tc.configure_args.append("--with-out-ext=+,-test-,io/console")
         tc.generate()
 
         if is_msvc(self):
@@ -289,7 +294,7 @@ class RubyConan(ConanFile):
 
         lib_dir = Path(self.package_folder) / "lib"
         ext_libs_abs = list(lib_dir.glob(f"ext/**/*.{libext}")) + list(lib_dir.glob(f"enc/**/*.{libext}"))
-        ext_libs = [str(x.relative_to(lib_dir)) for x in ext_libs_abs]
+        ext_libs = [x.relative_to(lib_dir).as_posix() for x in ext_libs_abs]
         self.cpp_info.libs.extend(ext_libs)
 
         obj_ext = "obj" if self.settings.os == "Windows" else "o"
