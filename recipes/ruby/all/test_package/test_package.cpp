@@ -16,7 +16,7 @@ extern "C"
   void ruby_gc_set_params(void);
   void Init_enc(void);
   void Init_ext(void);
-  void Init_extra_exts(void);  // Customization point
+  // void Init_extra_exts(void);  // Customization point
   void rb_call_builtin_inits(void);
 }
 #endif
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
   // rb_enc_set_default_external(rb_enc_from_encoding(rb_utf8_encoding()));
 
   Init_ext(); /* load statically linked extensions before rubygems */
-  Init_extra_exts();
+  // Init_extra_exts();
   rb_call_builtin_inits();
 #else
   ruby_init_loadpath();
