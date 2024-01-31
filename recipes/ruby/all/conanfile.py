@@ -93,8 +93,10 @@ class RubyConan(ConanFile):
             del self.options.with_readline
         elif self.settings.os == "Windows":
             # readline isn't supported on Windows
-            self.output.warning("Conan readline is not supported on Windows.")
-            del self.options.with_readline
+            self.output.warning(
+                "Conan readline is not supported on Windows. Assuming you have vcpkg's readline in "
+                r"C:\vcpkg\installed\x64-windows")
+            # del self.options.with_readline
 
         if is_msvc(self) and Version(self.version) < "3.2.0":
             # conan libffi will not allow linking right now with MSVC
@@ -122,7 +124,7 @@ class RubyConan(ConanFile):
             self.requires("libffi/3.4.4")
             # self.requires("libffi/[>=3.4 <3.5]")
 
-        if self.options.get_safe("with_readline"):
+        if self.options.get_safe("with_readline") and self.settings.os != "Windows":
             self.requires("readline/8.2")
             # self.requires("readline/[>=8.1 <9]")
 
@@ -171,10 +173,19 @@ class RubyConan(ConanFile):
 
         for dep in ["zlib", "openssl", "libffi", "libyaml", "readline", "gmp"]:
             # zlib always True
-            if dep == "zlib" or self.options.get_safe(f"with_{dep}"):
+            if (dep == "zlib" or self.options.get_safe(f"with_{dep}") and
+                not (dep == 'readline' and is_msvc(self))):
                 root_path = self.dependencies[dep].package_path.as_posix()
                 tc.configure_args.append(f"--with-{dep}-dir={root_path}")
                 opt_dirs.append(root_path)
+
+        has_vcpkg_readline = False
+        if is_msvc(self) and self.options.get_safe("with_readline"):
+            if os.path.exists('C:/vcpkg/installed/x64-windows/lib/readline.lib'):
+                self.output.warning("Appending C:/src/vcpkg/installed/x64-windows to opt dir for readline")
+                opt_dirs.append("C:/vcpkg/installed/x64-windows")
+                tc.extra_ldflags.append('-libpath:C:/vcpkg/installed/x64-windows/lib')
+                has_vcpkg_readline = True
 
         if opt_dirs:
             if self.settings.os == "Windows":
@@ -209,7 +220,7 @@ class RubyConan(ConanFile):
                 tc.ldflags.append("-debug")
             tc.build_type_flags = [f if f != "-O2" else self._msvc_optflag for f in tc.build_type_flags]
 
-            if Version(self.version) < "3.3.0":
+            if Version(self.version) < "3.3.0" and not has_vcpkg_readline:
                 tc.configure_args.append("--without-ext=\"+,-test-,dbm,gdbm,readline,io/console,syslog,pty\"")
             if Version(self.version) < "3.2.0":
                 tc.configure_args.append("--enable-bundled-libffi")

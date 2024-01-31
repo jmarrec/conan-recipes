@@ -298,6 +298,11 @@ jobs:
         exit 0
 
 
+    - name: Install readline libraries with vcpkg since conan does not support it
+      if: runner.os == 'Windows'
+      run: |
+        vcpkg --triplet x64-windows install readline
+
     - name: build x86_64
       shell: bash
       working-directory: recipes/ruby/all
