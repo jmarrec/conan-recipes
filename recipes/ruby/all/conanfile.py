@@ -215,7 +215,20 @@ class RubyConan(ConanFile):
         if Version(self.version) < "3.2.0":
             replace_in_file(self, os.path.join(self.source_folder, "gems", "bundled_gems"), "rbs 2.0.0", "rbs 3.1.0")
             replace_in_file(self, os.path.join(self.source_folder, "gems", "bundled_gems"), "debug 1.4.0", "debug 1.6.3")
-
+        # TODO: make it a patch?
+        win32_makefile_sub = os.path.join(self.source_folder, "win32", "Makefile.sub")
+        replace_in_file(self, win32_makefile_sub,
+                        "DEBUGFLAGS = -Zi", "DEBUGFLAGS = -Z7")
+        replace_in_file(self, win32_makefile_sub,
+                        'RUNRUBY = .\$(PROGRAM) -I$(srcdir)/lib -I"$(EXTOUT)/$(arch)" -I.',
+                        'RUNRUBY = .\$(PROGRAM) -I$(srcdir)/lib -I"$(EXTOUT)/$(arch)" -I"$(EXTOUT)/common" -I.')
+        replace_in_file(self, win32_makefile_sub,
+                        'LDFLAGS = -incremental:no -debug -opt:ref -opt:icf',
+                        # LNK4099: can't find .pdb
+                        # LNK4049: symbol 'symbol' defined in 'filename.obj' is imported
+                        # LNK4217: symbol 'symbol' defined in 'filename_1.obj' is imported by 'filename_2.obj' in function 'function'
+                        # LNK4286: symbol 'symbol' defined in 'filename_1.obj' is imported by 'filename_2.obj'
+                        'LDFLAGS = -incremental:no -debug -opt:ref -opt:icf -IGNORE:4099,4049,4217,4286')
     def build(self):
         self._patch_sources()
 
