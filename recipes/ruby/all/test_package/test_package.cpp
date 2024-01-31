@@ -13,33 +13,11 @@
 #ifdef RUBY_STATIC_RUBY
 extern "C"
 {
-  // static void Init_builtin_prelude(void);
-  // void Init_builtin_gem_prelude(void);
-
   void ruby_gc_set_params(void);
   void Init_enc(void);
   void Init_ext(void);
   void Init_extra_exts(void);  // Customization point
   void rb_call_builtin_inits(void);
-  // void ruby_init_prelude(void);
-
-  void Init_builtin_array(void);
-  void Init_builtin_ast(void);
-  void Init_builtin_dir(void);
-  void Init_builtin_gc(void);
-  void Init_builtin_io(void);
-  void Init_builtin_kernel(void);
-  void Init_builtin_marshal(void);
-  void Init_builtin_nilclass(void);
-  void Init_builtin_numeric(void);
-  void Init_builtin_pack(void);
-  void Init_builtin_ractor(void);
-  void Init_builtin_timev(void);
-  void Init_builtin_trace_point(void);
-  void Init_builtin_warning(void);
-  void Init_builtin_symbol(void);
-  void Init_builtin_thread_sync(void);
-  // void Init_builtin_yjit(void);
 }
 #endif
 
@@ -71,47 +49,16 @@ int main(int argc, char* argv[]) {
 #endif
 
 #ifdef RUBY_STATIC_RUBY
-
   ruby_gc_set_params();
   ruby_init_loadpath();
 
   Init_enc();
+  // rb_enc_set_default_internal(rb_enc_from_encoding(rb_utf8_encoding()));
+  // rb_enc_set_default_external(rb_enc_from_encoding(rb_utf8_encoding()));
 
   Init_ext(); /* load statically linked extensions before rubygems */
   Init_extra_exts();
   rb_call_builtin_inits();
-  // ruby_init_prelude();
-
-/*
-  Init_builtin_gc();
-  Init_builtin_ractor();
-  Init_builtin_numeric();
-  Init_builtin_io();
-  Init_builtin_dir();
-  Init_builtin_ast();
-  Init_builtin_trace_point();
-  Init_builtin_pack();
-  Init_builtin_warning();
-  Init_builtin_array();
-  Init_builtin_kernel();
-#  if RUBY_API_VERSION_MAJOR == 3 && RUBY_API_VERSION_MINOR > 1
-  Init_builtin_symbol();
-#  endif
-  Init_builtin_timev();
-#  if RUBY_API_VERSION_MAJOR == 3 && RUBY_API_VERSION_MINOR > 1
-  Init_builtin_thread_sync();
-#  endif
-  // Init_builtin_yjit();
-  Init_builtin_nilclass();
-  Init_builtin_marshal();
-
-  // Init_builtin_prelude();
-  // Init_builtin_gem_prelude();
-  rb_provide("rbconfig");
-
-  rb_provide("bigdecimal");
-  rb_provide("bigdecimal.so");
-*/
 #else
   ruby_init_loadpath();
 #endif
