@@ -12,6 +12,7 @@ from conan.tools.scm import Version
 import glob
 import os
 from pathlib import Path
+import shutil
 
 required_conan_version = ">=1.53"
 
@@ -275,22 +276,27 @@ class RubyConan(ConanFile):
                 dst = os.path.join("lib", dirname)
                 copy(self, "*.a", src=dirname, dst=os.path.join(self.package_folder, dst), keep_path=True)
                 copy(self, "*.lib", src=dirname, dst=os.path.join(self.package_folder, dst), keep_path=True)
+                obj_ext = "obj" if self.settings.os == "Windows" else "o"
+                init_obj = f"{dirname}init.{obj_ext}"
+                shutil.copy(src=os.path.join(self.build_folder, dirname, init_obj),
+                            dst=os.path.join(self.package_folder, dst, init_obj))
+                init_c = f"{dirname}init.c"
+                shutil.copy(src=os.path.join(self.build_folder, dirname, init_c),
+                            dst=os.path.join(self.package_folder, dst, init_c))
 
     def _collect_static_ext_enc_libs(self):
         libext = "lib" if self.settings.os == "Windows" else "a"
 
-        # enc: at root
-        self.cpp_info.components["enc"].libdirs = 'lib/enc'
-        self.cpp_info.components["enc"].libs = collect_libs(self, folder=os.path.join(self.package_folder, 'lib', 'enc'))
-        self.cpp_info.components["enc"].set_property("cmake_target_name", "Ruby::Encodings_libs")
+        lib_dir = Path(self.package_folder) / "lib"
+        ext_libs_abs = list(lib_dir.glob(f"ext/**/*.{libext}")) + list(lib_dir.glob(f"enc/**/*.{libext}"))
+        ext_libs = [str(x.relative_to(lib_dir)) for x in ext_libs_abs]
+        self.cpp_info.libs.extend(ext_libs)
 
-        ext_lib_dir = Path(self.package_folder) / "lib"  / "ext"
-        # ext_dirs = [x.relative_to(ext_lib_dir) for x in ext_lib_dir.iterdir()]
-        ext_libs = [x.relative_to(self.package_folder) for x in ext_lib_dir.glob(f"**/*.{libext}")]
-        ext_dirs = list(set([str(x.parent) for x in ext_libs]))
-        self.cpp_info.components["ext"].libdirs = ext_dirs
-        self.cpp_info.components["ext"].libs = [str(x.with_suffix('')) for x in ext_libs]
-        self.cpp_info.components["ext"].set_property("cmake_target_name", "Ruby::Extension_libs")
+        obj_ext = "obj" if self.settings.os == "Windows" else "o"
+        self.cpp_info.objects = [
+            os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
+            os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
+        ]
 
     def package_info(self):
         version = Version(self.version)

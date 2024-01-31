@@ -16,6 +16,13 @@ extern "C"
   // static void Init_builtin_prelude(void);
   // void Init_builtin_gem_prelude(void);
 
+  void ruby_gc_set_params(void);
+  void Init_enc(void);
+  void Init_ext(void);
+  void Init_extra_exts(void);  // Customization point
+  void rb_call_builtin_inits(void);
+  // void ruby_init_prelude(void);
+
   void Init_builtin_array(void);
   void Init_builtin_ast(void);
   void Init_builtin_dir(void);
@@ -65,6 +72,17 @@ int main(int argc, char* argv[]) {
 
 #ifdef RUBY_STATIC_RUBY
 
+  ruby_gc_set_params();
+  ruby_init_loadpath();
+
+  Init_enc();
+
+  Init_ext(); /* load statically linked extensions before rubygems */
+  Init_extra_exts();
+  rb_call_builtin_inits();
+  // ruby_init_prelude();
+
+/*
   Init_builtin_gc();
   Init_builtin_ractor();
   Init_builtin_numeric();
@@ -93,6 +111,7 @@ int main(int argc, char* argv[]) {
 
   rb_provide("bigdecimal");
   rb_provide("bigdecimal.so");
+*/
 #else
   ruby_init_loadpath();
 #endif
