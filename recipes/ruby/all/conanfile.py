@@ -185,6 +185,8 @@ class RubyConan(ConanFile):
                 self.output.warning("Appending C:/src/vcpkg/installed/x64-windows to opt dir for readline")
                 opt_dirs.append("C:/vcpkg/installed/x64-windows")
                 tc.extra_ldflags.append('-libpath:C:/vcpkg/installed/x64-windows/lib')
+                tc.extra_cflags.append('-IC:/vcpkg/installed/x64-windows/include')
+                tc.extra_cxxflags.append('-IC:/vcpkg/installed/x64-windows/include')
                 has_vcpkg_readline = True
 
         if opt_dirs:
