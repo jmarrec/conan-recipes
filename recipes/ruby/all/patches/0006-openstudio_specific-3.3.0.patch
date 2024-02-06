@@ -93,3 +93,96 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
  			$(RUBY_SO_NAME).res $(SOLIBS) $(EXTSOLIBS) $(LIBS) -Fe$@ -link $(LDFLAGS) \
  			$(LIBRUBY_DLDFLAGS)
  		@$(RM) dummy.lib dummy.exp
+diff --git lib/rubygems.rb lib/rubygems.rb
+--- lib/rubygems.rb
++++ lib/rubygems.rb
+@@ -1296,23 +1296,24 @@ An Array (#{env.inspect}) was passed in from #{caller[3]}
+ 
+   MARSHAL_SPEC_DIR = "quick/Marshal.#{Gem.marshal_version}/".freeze
+ 
+-  autoload :ConfigFile,         File.expand_path("rubygems/config_file", __dir__)
+-  autoload :CIDetector,         File.expand_path("rubygems/ci_detector", __dir__)
+-  autoload :Dependency,         File.expand_path("rubygems/dependency", __dir__)
+-  autoload :DependencyList,     File.expand_path("rubygems/dependency_list", __dir__)
+-  autoload :Installer,          File.expand_path("rubygems/installer", __dir__)
+-  autoload :Licenses,           File.expand_path("rubygems/util/licenses", __dir__)
+-  autoload :NameTuple,          File.expand_path("rubygems/name_tuple", __dir__)
+-  autoload :PathSupport,        File.expand_path("rubygems/path_support", __dir__)
+-  autoload :RequestSet,         File.expand_path("rubygems/request_set", __dir__)
+-  autoload :Requirement,        File.expand_path("rubygems/requirement", __dir__)
+-  autoload :Resolver,           File.expand_path("rubygems/resolver", __dir__)
+-  autoload :Source,             File.expand_path("rubygems/source", __dir__)
+-  autoload :SourceList,         File.expand_path("rubygems/source_list", __dir__)
+-  autoload :SpecFetcher,        File.expand_path("rubygems/spec_fetcher", __dir__)
+-  autoload :SpecificationPolicy, File.expand_path("rubygems/specification_policy", __dir__)
+-  autoload :Util,               File.expand_path("rubygems/util", __dir__)
+-  autoload :Version,            File.expand_path("rubygems/version", __dir__)
++  require 'rubygems/config_file'              # autoload :ConfigFile
++  require 'rubygems/ci_detector'              # autoload :CIDetector
++  require 'rubygems/dependency'               # autoload :Dependency
++  require 'rubygems/dependency_list'          # autoload :DependencyList
++  require 'rubygems/installer'                # autoload :Installer
++  require 'rubygems/util/licenses'            # autoload :Licenses
++  require 'rubygems/name_tuple'               # autoload :NameTuple
++  require 'rubygems/path_support'             # autoload :PathSupport
++  require 'rubygems/platform'                 # --- Added
++  require 'rubygems/requirement'              # autoload :Requirement
++  require 'rubygems/request_set'              # autoload :RequestSet -- reordered after requirement
++  require 'rubygems/resolver'                 # autoload :Resolver
++  require 'rubygems/source'                   # autoload :Source
++  require 'rubygems/source_list'              # autoload :SourceList
++  require 'rubygems/spec_fetcher'             # autoload :SpecFetcher
++  require 'rubygems/specification_policy'     # autoload :SpecificationPolicy
++  require 'rubygems/util'                     # autoload :Util
++  require 'rubygems/version'                  # autoload :Version
+ end
+ 
+ require_relative "rubygems/exceptions"
+diff --git lib/rubygems/openssl.rb lib/rubygems/openssl.rb
+--- lib/rubygems/openssl.rb
++++ lib/rubygems/openssl.rb
+@@ -1,6 +1,6 @@
+ # frozen_string_literal: true
+ 
+-autoload :OpenSSL, "openssl"
++require 'openssl'           # autoload :OpenSSL
+ 
+ module Gem
+   HAVE_OPENSSL = defined? OpenSSL::SSL # :nodoc:
+diff --git lib/bundler/vendor/net-http-persistent/lib/net/http/persistent.rb lib/bundler/vendor/net-http-persistent/lib/net/http/persistent.rb
+--- lib/bundler/vendor/net-http-persistent/lib/net/http/persistent.rb
++++ lib/bundler/vendor/net-http-persistent/lib/net/http/persistent.rb
+@@ -3,7 +3,7 @@ require_relative '../../../../uri/lib/uri'
+ require 'cgi' # for escaping
+ require_relative '../../../../connection_pool/lib/connection_pool'
+ 
+-autoload :OpenSSL, 'openssl'
++require 'openssl'           # autoload :OpenSSL
+ 
+ ##
+ # Persistent connections for Gem::Net::HTTP
+diff --git lib/net/http.rb lib/net/http.rb
+index 34ca0669..87a2a786 100644
+--- lib/net/http.rb
++++ lib/net/http.rb
+@@ -23,7 +23,7 @@
+ require 'net/protocol'
+ require 'uri'
+ require 'resolv'
+-autoload :OpenSSL, 'openssl'
++require 'openssl'           # autoload :OpenSSL
+ 
+ module Net   #:nodoc:
+ 
+diff --git lib/rubygems/net-http/lib/net/http.rb lib/rubygems/net-http/lib/net/http.rb
+--- lib/rubygems/net-http/lib/net/http.rb
++++ lib/rubygems/net-http/lib/net/http.rb
+@@ -23,7 +23,7 @@
+ require_relative '../../../net-protocol/lib/net/protocol'
+ require 'uri'
+ require_relative '../../../resolv/lib/resolv'
+-autoload :OpenSSL, 'openssl'
++require 'openssl'           # autoload :OpenSSL
+ 
+ module Gem::Net   #:nodoc:
+ 

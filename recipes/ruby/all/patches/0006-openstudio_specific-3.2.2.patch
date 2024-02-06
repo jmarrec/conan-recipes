@@ -116,23 +116,23 @@ diff --git a/lib/rubygems.rb b/lib/rubygems.rb
 -  autoload :SpecificationPolicy, File.expand_path("rubygems/specification_policy", __dir__)
 -  autoload :Util,               File.expand_path("rubygems/util", __dir__)
 -  autoload :Version,            File.expand_path("rubygems/version", __dir__)
-+  require 'rubygems/config_file' # autoload :ConfigFile,
-+  require 'rubygems/dependency' # autoload :Dependency,
-+  require 'rubygems/dependency_list' # autoload :DependencyList,
-+  require 'rubygems/installer' # autoload :Installer,
-+  require 'rubygems/util/licenses' # autoload :Licenses,
-+  require 'rubygems/name_tuple' # autoload :NameTuple,
-+  require 'rubygems/path_support' # autoload :PathSupport,
-+  require 'rubygems/platform'   # Added
-+  require 'rubygems/requirement' # autoload :Requirement,
-+  require 'rubygems/request_set' # autoload :RequestSet,
-+  require 'rubygems/resolver' # autoload :Resolver,
-+  require 'rubygems/source' # autoload :Source,
-+  require 'rubygems/source_list' # autoload :SourceList,
-+  require 'rubygems/spec_fetcher' # autoload :SpecFetcher,
-+  require 'rubygems/specification_policy' # autoload :SpecificationPolicy,
-+  require 'rubygems/util' # autoload :Util,
-+  require 'rubygems/version' # autoload :Version,
++  require 'rubygems/config_file'              # autoload :ConfigFile
++  require 'rubygems/dependency'               # autoload :Dependency,
++  require 'rubygems/dependency_list'          # autoload :DependencyList,
++  require 'rubygems/installer'                # autoload :Installer,
++  require 'rubygems/util/licenses'            # autoload :Licenses,
++  require 'rubygems/name_tuple'               # autoload :NameTuple,
++  require 'rubygems/path_support'             # autoload :PathSupport,
++  require 'rubygems/platform'                 # --- Added
++  require 'rubygems/requirement'              # autoload :Requirement,
++  require 'rubygems/request_set'              # autoload :RequestSet,
++  require 'rubygems/resolver'                 # autoload :Resolver,
++  require 'rubygems/source'                   # autoload :Source,
++  require 'rubygems/source_list'              # autoload :SourceList,
++  require 'rubygems/spec_fetcher'             # autoload :SpecFetcher,
++  require 'rubygems/specification_policy'     # autoload :SpecificationPolicy,
++  require 'rubygems/util'                     # autoload :Util,
++  require 'rubygems/version'                  # autoload :Version,
  end
  
  require_relative "rubygems/exceptions"
