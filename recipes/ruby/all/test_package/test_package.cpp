@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
 #ifdef RUBY_STATIC_LINKED_EXT2
   rb_eval_string("puts 'Ruby has statically linked extensions (EXTSTATIC)'");
 #else
-  rb_eval_string("puts 'Ruby has dynamically linked extensions (EXTSTATIC)'");
+  rb_eval_string("puts 'Ruby has dynamically linked extensions (!EXTSTATIC)'");
 #endif
 
 #ifdef RUBY_STATIC_RUBY
@@ -87,6 +87,32 @@ int main(int argc, char* argv[]) {
        end
      )");
 
+  rb_eval_string(R"(
+       begin
+         require 'zlib'
+         puts "I can correctly load one of the extension gems - zlib - #{Zlib::VERSION}"
+       rescue Exception => e
+         puts
+         puts "#{e.class}: #{e.message}"
+         puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
+         raise
+       end
+     )");
+
+  rb_eval_string(R"(
+       begin
+         require 'openssl'
+         puts "I can correctly load one of the extension gems - openssl - #{OpenSSL::OPENSSL_VERSION}"
+         puts OpenSSL::SSL
+         #puts OpenSSL::VERSION
+         #puts puts OpenSSL::PKCS5
+       rescue Exception => e
+         puts
+         puts "#{e.class}: #{e.message}"
+         puts "Backtrace:\n\t" + e.backtrace.join("\n\t")
+         raise
+       end
+     )");
   /*
   rb_eval_string(R"(
        def absolute_path(path)
