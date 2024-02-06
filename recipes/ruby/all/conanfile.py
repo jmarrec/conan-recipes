@@ -306,53 +306,81 @@ class RubyConan(ConanFile):
         lib_dir = Path(self.package_folder) / "lib"
         ext_libs_abs = list(lib_dir.glob(f"ext/**/*.{libext}")) + list(lib_dir.glob(f"enc/**/*.{libext}"))
         ext_libs = [x.relative_to(lib_dir).as_posix() for x in ext_libs_abs]
-        self.cpp_info.libs.extend(ext_libs)
+        self.cpp_info.components["extlibs"].libs.extend(ext_libs)
+        self.cpp_info.components["extlibs"].set_property("cmake_target_name", "Ruby::ExtLibs")
 
+        # This works on ubuntu
         # obj_ext = "obj" if self.settings.os == "Windows" else "o"
-        # self.cpp_info.objects = [
-        #     os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
-        #     os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
-        # ]
+        # libruby = lib_dir / 'libruby-static.a'
+        # extinit = lib_dir / 'ext' / 'extinit.o'
+        # encinit = lib_dir / 'enc' / 'encinit.o'
+        # self.run(f"ar dD {libruby} dmyext.o dmyenc.o")
+        # self.run(f"ar rD {libruby} {extinit} {encinit}")
+        # self.cpp_info.components["extlibs"].objects = [
+        #    os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
+        #    os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
+        #]
+
 
     def package_info(self):
         version = Version(self.version)
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "Ruby")
-        self.cpp_info.set_property("cmake_target_name", "Ruby::Ruby")
+        self.cpp_info.set_property("cmake_module_file_name", "Ruby") # Official CMake FindModule name
         self.cpp_info.set_property("pkg_config_name", "ruby")
         self.cpp_info.set_property("pkg_config_aliases", [f"ruby-{version.major}.{version.minor}"])
 
+        self.cpp_info.set_property("cmake_target_name", "Ruby::Ruby")
+
+        self.cpp_info.components["libruby"].set_property("cmake_target_name", "Ruby::RubyLib")
         config_file = glob.glob(os.path.join(self.package_folder, "include", "**", "ruby", "config.h"), recursive=True)[
             0
         ]
-        self.cpp_info.includedirs = [
+        self.cpp_info.components["libruby"].includedirs = [
             os.path.join(self.package_folder, "include", f"ruby-{version.major}.{version.minor}.0"),
             os.path.dirname(os.path.dirname(config_file)),
         ]
         # Collect libruby itself
-        self.cpp_info.libs = collect_libs(self)
+        self.cpp_info.components["libruby"].libs = collect_libs(self)
         if is_msvc(self):
             if self.options.shared:
-                self.cpp_info.libs = list(filter(lambda l: not l.endswith("-static"), self.cpp_info.libs))
+                self.cpp_info.components["libruby"].libs = list(filter(lambda l: not l.endswith("-static"), self.cpp_info.libs))
             else:
-                self.cpp_info.libs = list(filter(lambda l: l.endswith("-static"), self.cpp_info.libs))
+                self.cpp_info.components["libruby"].libs = list(filter(lambda l: l.endswith("-static"), self.cpp_info.libs))
 
         if not self.options.shared and self.options.with_static_linked_ext:
             self._collect_static_ext_enc_libs()
 
+        extlibs = self.cpp_info.components["extlibs"]
+        extlibs.requires = ["zlib::zlib"]
+        if self.options.get_safe("with_openssl"):
+            extlibs.requires.append("openssl::openssl")
+        if self.options.get_safe("with_libyaml"):
+            extlibs.requires.append("libyaml::libyaml")
+        if self.options.get_safe("with_libffi"):
+            extlibs.requires.append("libffi::libffi")
+        if self.options.get_safe("with_readline"):
+            extlibs.requires.append("readline::readline")
+        if self.options.get_safe("with_gmp"):
+            extlibs.requires.append("gmp::gmp")
+
+        self.cpp_info.components["libruby"].requires = ["extlibs"]
+
         if self.settings.os in ("FreeBSD", "Linux"):
-            self.cpp_info.system_libs = ["dl", "pthread", "rt", "m", "crypt", "util"]
+            self.cpp_info.components["extlibs"].system_libs = ["dl", "pthread", "rt", "m", "crypt", "util"]
         elif self.settings.os == "Windows":
-            self.cpp_info.system_libs = self._windows_system_libs
+            self.cpp_info.components["extlibs"].system_libs = self._windows_system_libs
         if str(self.settings.compiler) in ("clang", "apple-clang"):
-            self.cpp_info.cflags = ["-fdeclspec"]
-            self.cpp_info.cxxflags = ["-fdeclspec"]
+            self.cpp_info.components["extlibs"].cflags = ["-fdeclspec"]
+            self.cpp_info.components["extlibs"].cxxflags = ["-fdeclspec"]
         if is_apple_os(self):
-            self.cpp_info.frameworks = ["CoreFoundation"]
+            self.cpp_info.components["extlibs"].frameworks = ["CoreFoundation"]
+
+        binpath = os.path.join(self.package_folder, "bin")
+        self.runenv_info.prepend_path("PATH", os.path.join(self.package_folder, "bin"))
 
         # TODO: to remove in conan v2
         self.cpp_info.names["cmake_find_package"] = "Ruby"
         self.cpp_info.names["cmake_find_package_multi"] = "Ruby"
-        binpath = os.path.join(self.package_folder, "bin")
         self.env_info.PATH.append(binpath)
-        self.runenv_info.prepend_path("PATH", os.path.join(self.package_folder, "bin"))
+
