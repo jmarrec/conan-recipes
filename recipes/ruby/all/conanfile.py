@@ -265,6 +265,7 @@ class RubyConan(ConanFile):
             self.run("nmake")
         else:
             autotools.make()
+            autotools.make(target="final-libruby-a", args=["V=1"])
 
     def package(self):
         for file in ["COPYING", "BSDL"]:
@@ -306,11 +307,11 @@ class RubyConan(ConanFile):
         ext_libs = [x.relative_to(lib_dir).as_posix() for x in ext_libs_abs]
         self.cpp_info.libs.extend(ext_libs)
 
-        obj_ext = "obj" if self.settings.os == "Windows" else "o"
-        self.cpp_info.objects = [
-            os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
-            os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
-        ]
+        # obj_ext = "obj" if self.settings.os == "Windows" else "o"
+        # self.cpp_info.objects = [
+        #     os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
+        #     os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
+        # ]
 
     def package_info(self):
         version = Version(self.version)
