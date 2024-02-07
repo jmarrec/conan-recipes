@@ -249,7 +249,8 @@ class RubyConan(ConanFile):
         self._patch_sources()
 
         autotools = Autotools(self)
-
+        if self.settings.os != "Windows":
+            autotools.autoreconf()
         build_script_folder = self.source_folder
         if is_msvc(self):
             # self.conf["tools.gnu:make_program"] = "nmake"
