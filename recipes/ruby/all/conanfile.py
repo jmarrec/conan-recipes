@@ -310,16 +310,17 @@ class RubyConan(ConanFile):
         self.cpp_info.components["extlibs"].set_property("cmake_target_name", "Ruby::ExtLibs")
 
         # This works on ubuntu
-        # obj_ext = "obj" if self.settings.os == "Windows" else "o"
+        obj_ext = "obj" if self.settings.os == "Windows" else "o"
         # libruby = lib_dir / 'libruby-static.a'
         # extinit = lib_dir / 'ext' / 'extinit.o'
         # encinit = lib_dir / 'enc' / 'encinit.o'
         # self.run(f"ar dD {libruby} dmyext.o dmyenc.o")
         # self.run(f"ar rD {libruby} {extinit} {encinit}")
-        # self.cpp_info.components["extlibs"].objects = [
-        #    os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
-        #    os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
-        #]
+        if self.settings.os == "Windows":
+            self.cpp_info.components["extlibs"].objects = [
+                os.path.join("lib", "ext", "extinit.{}".format(obj_ext)),
+                os.path.join("lib", "enc", "encinit.{}".format(obj_ext))
+            ]
 
 
     def package_info(self):
