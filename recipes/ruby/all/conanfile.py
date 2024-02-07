@@ -88,8 +88,12 @@ class RubyConan(ConanFile):
         self.settings.rm_safe("compiler.libcxx")
         self.settings.rm_safe("compiler.cppstd")
 
-        if self.settings.os == "Windows":
+        if Version(self.version) >= "3.3.0":
+            # Readline removed in 3.3.0 in favor of reline I think.
+            del self.options.with_readline
+        elif self.settings.os == "Windows":
             # readline isn't supported on Windows
+            self.output.warning("Conan readline is not supported on Windows.")
             del self.options.with_readline
 
         if is_msvc(self) and Version(self.version) < "3.2.0":
@@ -205,7 +209,8 @@ class RubyConan(ConanFile):
                 tc.ldflags.append("-debug")
             tc.build_type_flags = [f if f != "-O2" else self._msvc_optflag for f in tc.build_type_flags]
 
-            tc.configure_args.append("--without-ext=\"+,-test-,dbm,gdbm,readline,io/console,syslog,pty\"")
+            if Version(self.version) < "3.3.0":
+                tc.configure_args.append("--without-ext=\"+,-test-,dbm,gdbm,readline,io/console,syslog,pty\"")
             if Version(self.version) < "3.2.0":
                 tc.configure_args.append("--enable-bundled-libffi")
         #else:
