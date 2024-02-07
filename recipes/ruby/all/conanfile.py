@@ -17,8 +17,8 @@ import shutil
 required_conan_version = ">=1.53"
 
 
-class RubyConan(ConanFile):
-    name = "ruby"
+class OpenStudioRubyConan(ConanFile):
+    name = "openstudio_ruby"
     description = "The Ruby Programming Language"
     license = "Ruby"
     topics = ("ruby", "c", "language", "object-oriented", "ruby-language")

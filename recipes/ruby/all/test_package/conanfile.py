@@ -65,7 +65,7 @@ class TestPackageConan(ConanFile):
         self.run('ruby -e "require \'openssl\'; puts OpenSSL::OPENSSL_VERSION"', output, env="conanrun")
         output_str = str(output.getvalue()).strip()
         self.output.info(f'OpenSSL::OPENSSL_VERSION: {output_str}')
-        expected_version = str(self.dependencies["ruby"].dependencies["openssl"].ref.version)
+        expected_version = str(self.dependencies[self.tested_reference_str].dependencies["openssl"].ref.version)
         self.output.info(f"Expected version: {expected_version}")
         assert expected_version in output_str
 
