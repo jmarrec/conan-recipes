@@ -1,0 +1,20 @@
+diff --git load.c load.c
+--- load.c
++++ load.c
+@@ -1263,11 +1263,14 @@ register_init_ext(st_data_t *key, st_data_t *value, st_data_t init, int existing
+ RUBY_FUNC_EXPORTED void
+ ruby_init_ext(const char *name, void (*init)(void))
+ {
++    rb_warn("ruby_init_ext for %s", name);
+     rb_vm_t *vm = GET_VM();
+     st_table *loading_tbl = get_loading_table(vm);
+ 
+-    if (feature_provided(vm, name, 0))
+-	return;
++    if (feature_provided(vm, name, 0)) {
++        rb_warn("feature_provided for %s", name);
++        return;
++    }
+     st_update(loading_tbl, (st_data_t)name, register_init_ext, (st_data_t)init);
+ }
+ 
