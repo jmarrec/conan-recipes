@@ -241,6 +241,10 @@ class RubyConan(ConanFile):
                         # LNK4217: symbol 'symbol' defined in 'filename_1.obj' is imported by 'filename_2.obj' in function 'function'
                         # LNK4286: symbol 'symbol' defined in 'filename_1.obj' is imported by 'filename_2.obj'
                         'LDFLAGS = -incremental:no -debug -opt:ref -opt:icf -IGNORE:4099,4049,4217,4286')
+
+        # Speed up the build by excluding the -test- folder
+        rmdir(self, os.path.join(self.source_folder, "ext", "-test-"))
+
     def build(self):
         self._patch_sources()
 
