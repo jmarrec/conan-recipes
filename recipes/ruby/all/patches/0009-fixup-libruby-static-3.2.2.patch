@@ -1,0 +1,59 @@
+Subject: fixup-libruby-static-3.2.2
+
+Replace dmyext / dmyenc (no-op) with the actual generated extinit.c encinit.c
+Note for macOS: `ar` doesn't have the same flags as on Ubuntu, so detect them in configure.ac
+
+diff --git configure.ac configure.ac
+--- configure.ac
++++ configure.ac
+@@ -470,9 +470,20 @@ host_alias=$target_alias
+ 
+ AC_CACHE_CHECK([for $AR flags], [rb_cv_arflags], [
+     AS_IF([$AR rcD conftest.a > /dev/null 2>&1 && rm conftest.a],
+-	[rb_cv_arflags=rcD], [rb_cv_arflags=rcu])
++    [
++        rb_cv_arflags=rcD
++        rb_cv_ardeleteflags=dD
++        rb_cv_arappendflags=rD
++    ],
++    [
++        rb_cv_arflags=rcu
++        rb_cv_ardeleteflags=d
++        rb_cv_arappendflags=r
++    ])
+ ])
+ AC_SUBST(ARFLAGS, ["$rb_cv_arflags "])
++AC_SUBST(ARDELETEFLAGS, ["$rb_cv_ardeleteflags "])
++AC_SUBST(ARAPPENDFLAGS, ["$rb_cv_arappendflags "])
+ AC_SUBST(ASFLAGS)
+ 
+ AS_CASE(["$target_os"],
+diff --git template/Makefile.in template/Makefile.in
+--- template/Makefile.in
++++ template/Makefile.in
+@@ -232,6 +232,8 @@ TOUCH         = touch
+ NM            = @NM@
+ AR            = @AR@
+ ARFLAGS       = @ARFLAGS@$(empty)
++ARDELETEFLAGS = @ARDELETEFLAGS@$(empty)
++ARAPPENDFLAGS = @ARAPPENDFLAGS@$(empty)
+ RANLIB        = @RANLIB@
+ AS            = @AS@
+ ASFLAGS       = @ASFLAGS@ $(ARCH_FLAG) $(INCFLAGS)
+@@ -346,6 +348,16 @@ $(LIBRUBY_A):
+ 		fi
+ 		@-$(RANLIB) $@ 2> /dev/null || true
+ 
++final-libruby-a: $(LIBRUBY_A)
++		$(ECHO) Replacing INCOBJS with EXTOBJS and ENCOBS in static-library $(LIBRUBY_A)
++		$(ECHO) LIBRUBY_A_OBJS=$(LIBRUBY_A_OBJS)
++		$(ECHO) INITOBJS=$(INITOBJS)
++		$(ECHO) EXTOBJS=$(EXTOBJS)
++		$(ECHO) ENCOBJS=$(ENCOBJS)
++		$(AR) $(ARDELETEFLAGS) $(LIBRUBY_A) $(INITOBJS)
++		$(AR) $(ARAPPENDFLAGS) $(LIBRUBY_A) $(EXTOBJS) enc/encinit.$(OBJEXT)
++		@-$(RANLIB) $(LIBRUBY_A) 2> /dev/null || true
++
+ verify-static-library: $(LIBRUBY_A)
+ 		$(ECHO) verifying static-library $@
+ 		@$(PURIFY) $(CC) $(EXE_LDFLAGS) $(XLDFLAGS) $(MAINOBJ) $(LIBRUBY_A) $(MAINLIBS) $(EXTLIBS) $(LIBS) $(OUTFLAG)conftest$(EXEEXT)
