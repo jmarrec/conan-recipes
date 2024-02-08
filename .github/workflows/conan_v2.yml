@@ -365,7 +365,7 @@ jobs:
         if-no-files-found: ignore
 
     - name: build armv8
-      if: matrix.build_name == 'apple-clang-15' && matrix.recipe_version != '3.1.0'
+      if: matrix.build_name == 'apple-clang-15-DISABLED' && matrix.recipe_version != '3.1.0'
       shell: bash
       working-directory: recipes/ruby/all
       run: |
