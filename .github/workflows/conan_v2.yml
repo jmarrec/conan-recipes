@@ -26,7 +26,7 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022, VS-2019, VS-2022]
+        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022]
         build_type: [Release, Debug]
         recipe_version: ["3.1.0", "3.2.2", "3.3.0"]
         include:
@@ -34,54 +34,63 @@ jobs:
           compiler: gcc
           version: 9
           os: ubuntu-20.04
-          # dockerImage: conanio/gcc9-ubuntu16.04:latest
+          arch: x86_64
           allow_failure: false
+          # dockerImage: conanio/gcc9-ubuntu16.04:latest
         - build_name: gcc-10
           compiler: gcc
           version: 10
           os: ubuntu-20.04
-          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+          arch: x86_64
           allow_failure: false
+          # dockerImage: conanio/gcc10-ubuntu16.04:latest
         - build_name: gcc-11
           compiler: gcc
           version: 11
           os: ubuntu-22.04
-          # dockerImage: conanio/gcc11-ubuntu16.04:latest
+          arch: x86_64
           allow_failure: false
+          # dockerImage: conanio/gcc11-ubuntu16.04:latest
         - build_name: gcc-12
           compiler: gcc
           version: 12
           os: ubuntu-22.04
-          # dockerImage: conanio/gcc12-ubuntu16.04:latest
+          arch: x86_64
           allow_failure: false
+          # dockerImage: conanio/gcc12-ubuntu16.04:latest
         - build_name: gcc-13
           compiler: gcc
           version: 13
           os: ubuntu-22.04
-          # dockerImage: conanio/gcc13-ubuntu16.04:latest
+          arch: x86_64
           allow_failure: false
+          # dockerImage: conanio/gcc13-ubuntu16.04:latest
         - build_name: apple-clang-11
           compiler: apple-clang
           version: 11
           os: macos-11
+          arch: x86_64
           SDKROOT: /Applications/Xcode_11.7.app
           allow_failure: false
         - build_name: apple-clang-12
           compiler: apple-clang
           version: 12
           os: macos-11
+          arch: x86_64
           SDKROOT: /Applications/Xcode_12.4.app
           allow_failure: false
         - build_name: apple-clang-13
           compiler: apple-clang
           version: 13
           os: macos-12
+          arch: x86_64
           SDKROOT: /Applications/Xcode_13.2.1.app
           allow_failure: false
         - build_name: apple-clang-14
           compiler: apple-clang
           version: 14
           os: macos-13
+          arch: x86_64
           SDKROOT: /Applications/Xcode_14.3.1.app
           # macos-12  /Applications/Xcode_14.2.app
           allow_failure: false
@@ -89,41 +98,35 @@ jobs:
           compiler: apple-clang
           version: 15
           os: macos-13
+          arch: x86_64
           SDKROOT: /Applications/Xcode_15.2.app
           allow_failure: false
         - build_name: apple-clang-14-armv8
           compiler: apple-clang
           version: 14
           os: macos-14
+          arch: armv8
           SDKROOT: /Applications/Xcode_14.3.1.app
           allow_failure: false
         - build_name: apple-clang-15-armv8
           compiler: apple-clang
           version: 15
           os: macos-14
+          arch: armv8
           SDKROOT: /Applications/Xcode_15.2.app
           allow_failure: false
         - build_name: msvc-2019
           compiler: msvc
           version: 192
           os: windows-2019
+          arch: x86_64
           allow_failure: false
         - build_name: msvc-2022
           compiler: msvc
           version: 193
           os: windows-2022
+          arch: x86_64
           allow_failure: false
-        - build_name: VS-2019
-          compiler: Visual Studio
-          version: 16
-          os: windows-2019
-          allow_failure: true
-        - build_name: VS-2022
-          compiler: Visual Studio
-          version: 17
-          os: windows-2022
-          allow_failure: true
-
 
     steps:
     - uses: actions/checkout@v4
@@ -140,25 +143,16 @@ jobs:
       run: |
         set -x
 
-        if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
-          pip install "conan<2"
-        else
-          pip install conan
-        fi
+        pip install "conan>=2"
 
         conan --version
-        CONAN_MAJOR_VERSION=$(python -c "from conans import __version__; print(__version__.split('.')[0])")
         if [ "$RUNNER_OS" == "Windows" ]; then
           DIR_SEP="\\"
         else
           DIR_SEP="/"
         fi
         export CONAN_USER_HOME="${{ github.workspace }}${DIR_SEP}conan-cache"
-
-        echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> "$GITHUB_OUTPUT"
         echo "CONAN_USER_HOME=$CONAN_USER_HOME" >> "$GITHUB_OUTPUT"
-
-        echo "CONAN_MAJOR_VERSION=$CONAN_MAJOR_VERSION" >> $GITHUB_ENV
         echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
 
         if [ "$RUNNER_OS" == "macOS" ]; then
@@ -200,56 +194,33 @@ jobs:
           gcc --version
         fi
 
+        export CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
+        CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
 
-        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          echo "is_conan2=false" >> "$GITHUB_OUTPUT"
-          export echo CONAN_USER_HOME_SHORT="$CONAN_USER_HOME${DIR_SEP}short" >> $GITHUB_ENV
-          # Unused on v1
-          CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan" >> $GITHUB_ENV
-          CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
+        conan profile detect --force --name default
+        conan profile path default
+        cat $CONAN_PROFILE_DEFAULT
+        # Mac has the FreeBSD flavor of sed and MUST take a backup suffix...
+        sed -i.bak 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
+        sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+        # Windows only
+        sed -i.bak 's/compiler.runtime_type=.*$/compiler.runtime_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+        # if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
+        #   # Remove these
+        #   sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
+        #   # Set to visual studio
+        #   sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
+        # fi
+        rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
+        conan profile show
 
-          echo "Enabling conan revisions and setting parallel_download"
-          conan config set general.revisions_enabled=True
-          conan config set general.parallel_download=8
-          # We detect the profile and use that as one of the cache key parameters, so if GHA upgrades compilers it won't pick up old binaries
-          conan profile new --detect --force default
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            conan profile update settings.compiler.libcxx=libstdc++11 default
-          fi
-
-          conan profile update settings.build_type=${{ matrix.build_type }} default
-
-          conan profile show default
-        else
-          echo "is_conan2=true" >> "$GITHUB_OUTPUT"
-          export CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
-          CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
-
-          conan profile detect --force --name default
-          conan profile path default
-          cat $CONAN_PROFILE_DEFAULT
-          # Mac has the FreeBSD flavor of sed and MUST take a backup suffix...
-          sed -i.bak 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
-          sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
-          # Windows only
-          sed -i.bak 's/compiler.runtime_type=.*$/compiler.runtime_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
-          # if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
-          #   # Remove these
-          #   sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
-          #   sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
-          #   sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
-          #   # Set to visual studio
-          #   sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
-          #   sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
-          # fi
-          rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
-          conan profile show
-
-          echo "core:non_interactive = True" >> $CONAN_HOME/global.conf
-          echo "core.download:parallel = {{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
-          echo "core.sources:download_cache = $CONAN_USER_HOME/.conan-download-cache" >> $CONAN_HOME/global.conf
-          cat $CONAN_HOME/global.conf
-        fi
+        echo "core:non_interactive = True" >> $CONAN_HOME/global.conf
+        echo "core.download:parallel = {{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
+        echo "core.sources:download_cache = $CONAN_USER_HOME/.conan-download-cache" >> $CONAN_HOME/global.conf
+        cat $CONAN_HOME/global.conf
 
         echo CONAN_HOME="$CONAN_HOME" >> $GITHUB_ENV
         echo CONAN_PROFILE_DEFAULT="$CONAN_PROFILE_DEFAULT" >> $GITHUB_ENV
@@ -263,11 +234,7 @@ jobs:
 
         # (Can't do that before we've se the CONAN_HOME / CONAN_USER_HOME)
         if [[ "$VERIFY_SSL" == "false" ]]; then
-          if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-            conan remote add --force nrel-v2 http://conan.openstudio.net/artifactory/api/conan/conan-v2 False # ${{ secrets.CONAN_UPLOAD }}
-          else
-            conan remote add --force --insecure nrel-v2 http://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
-          fi
+          conan remote add --force --insecure nrel-v2 http://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         else
           conan remote add --force nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
         fi
@@ -311,15 +278,11 @@ jobs:
         exit 0
 
 
-    - name: build x86_64
+    - name: build ${{ matrix.arch }}
       shell: bash
       working-directory: recipes/ruby/all
       run: |
-        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan_command="--test-folder test_v1_package -o '*:shared=False' -s build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True . ruby/${{ matrix.recipe_version }}@"
-        else
-          conan_command="-s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
-        fi
+        conan_command="-s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
         echo "conan_command=$conan_command"
         set +e
         conan create $conan_command 2> >(tee conan_output >&2)
@@ -340,16 +303,14 @@ jobs:
             ICON=":interrobang: $code"
             ;;
         esac
-        if [ "$CONAN_MAJOR_VERSION" == "2" ]; then
-          if grep -Fq "conan graph explain" conan_output; then
-            conan graph explain $conan_command
-          fi
+        if grep -Fq "conan graph explain" conan_output; then
+          conan graph explain $conan_command
         fi
         # Too many runs, just do a step summary if it fails
         if [ $code -ne 0 ]; then
           echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
           echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
-          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | x86_64 | $ICON |" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | ${{ matrix.arch }} | $ICON |" >> $GITHUB_STEP_SUMMARY
         fi
         if [ $code -ne 6 ]; then
           exit "$code"
@@ -367,67 +328,14 @@ jobs:
       if: ${{ always() }}
       run: |
         pip install rich
-        python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs_x86_64.zip
+        python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs.zip
 
     - name: Upload the logs
       uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
-        name: "conan-logs-x86_64-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
-        path: logs_x86_64.zip
-        if-no-files-found: ignore
-
-    - name: build armv8
-      if: matrix.build_name == 'apple-clang-15-DISABLED' && matrix.recipe_version != '3.1.0'
-      shell: bash
-      working-directory: recipes/ruby/all
-      run: |
-        conan_command="conan create -s:h arch=armv8 -s:a compiler.cppstd=20 --version ${{ matrix.recipe_version }} -o '*/*:shared=False' -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -c:b tools.apple:sdk_path=$sdk_path -c:h tools.apple:sdk_path=$sdk_path ."
-        echo "conan_command=$conan_command"
-        set +e
-        $conan_command 2> >(tee conan_output >&2)
-        code=${PIPESTATUS[0]}
-        set -e
-        echo $code
-        case $code in
-          0)
-            ICON=":white_check_mark:"
-            ;;
-          6)
-            ICON=":arrow_right_hook:"
-            ;;
-          1)
-            ICON=":x:"
-            ;;
-          *)
-            ICON=":interrobang: $code"
-            ;;
-        esac
-        if grep -Fq "conan graph explain" conan_output; then
-            conan graph explain $conan_command
-        fi
-        # Too many runs, just do a step summary if it fails
-        if [ $code -ne 0 ]; then
-          echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
-          echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
-          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | armv8 | $ICON |" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [ $code -ne 6 ]; then
-          exit "$code"
-        fi
-        exit 0
-
-    - name: Check for failed ext and report
-      if: ${{ always() && matrix.build_name == 'apple-clang-15' }}
-      run: |
-        python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs_armv8.zip
-
-    - name: Upload the logs
-      uses: actions/upload-artifact@v4
-      if: ${{ always() && matrix.build_name == 'apple-clang-15' }}
-      with:
-        name: "conan-logs-armv8-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
-        path: logs_armv8.zip
+        name: "conan-logs-${{ matrix.arch }}-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
+        path: logs.zip
         if-no-files-found: ignore
 
     - name: Upload to remote
@@ -435,22 +343,12 @@ jobs:
       if: ${{ github.event_name == 'push' && (contains(github.ref, 'refs/tags') || github.ref == 'refs/heads/main') }}
       run: |
         set -x
-        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan user -p ${{ secrets.CONAN_PASSWORD }} -r nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }}
-          conan upload 'ruby/${{ matrix.recipe_version }}@' -r nrel-v2 --all --no-overwrite recipe --parallel
-        else
-          conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
-          conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
-        fi
+        conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
+        conan upload -r nrel-v2 --confirm 'ruby/${{ matrix.recipe_version }}:*'
 
     - name: Remove non-critical folders from the cache
       shell: bash
       if: ${{ contains(github.ref, 'refs/tags') || ((github.event_name == 'push' &&  github.ref == 'refs/heads/main')) }}
       run: |
         set -x
-        if [ "$CONAN_MAJOR_VERSION" == "1" ]; then
-          conan remove "*" --src --builds --system-reqs -f
-        else
-          conan cache clean --source --build --download --temp
-        fi
-
+        conan cache clean --source --build --download --temp
