@@ -1,0 +1,328 @@
+name: Upload OpenStudio SDK deps
+
+on:
+  workflow_dispatch:
+
+env:
+  VERIFY_SSL: true
+
+jobs:
+  build:
+
+    name: "deps ${{ matrix.build_name }} - ${{ matrix.build_type }}"
+
+    # Note: as of 2021-01-29, this only works for push, not for pull request
+    # if: "!(contains(github.event.head_commit.message, 'skip') && contains(github.event.head_commit.message, 'ci'))"
+    # runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allow_failure }}
+    strategy:
+      # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
+      fail-fast: false
+      matrix:
+        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022]
+        build_type: [Release, Debug]
+        include:
+        - build_name: gcc-9
+          compiler: gcc
+          version: 9
+          os: ubuntu-20.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc9-ubuntu16.04:latest
+        - build_name: gcc-10
+          compiler: gcc
+          version: 10
+          os: ubuntu-20.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+        - build_name: gcc-11
+          compiler: gcc
+          version: 11
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc11-ubuntu16.04:latest
+        - build_name: gcc-12
+          compiler: gcc
+          version: 12
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc12-ubuntu16.04:latest
+        - build_name: gcc-13
+          compiler: gcc
+          version: 13
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc13-ubuntu16.04:latest
+        - build_name: apple-clang-11
+          compiler: apple-clang
+          version: 11
+          os: macos-11
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_11.7.app
+          allow_failure: false
+        - build_name: apple-clang-12
+          compiler: apple-clang
+          version: 12
+          os: macos-11
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_12.4.app
+          allow_failure: false
+        - build_name: apple-clang-13
+          compiler: apple-clang
+          version: 13
+          os: macos-12
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_13.2.1.app
+          allow_failure: false
+        - build_name: apple-clang-14
+          compiler: apple-clang
+          version: 14
+          os: macos-13
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_14.3.1.app
+          # macos-12  /Applications/Xcode_14.2.app
+          allow_failure: false
+        - build_name: apple-clang-15
+          compiler: apple-clang
+          version: 15
+          os: macos-13
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_15.2.app
+          allow_failure: false
+        - build_name: apple-clang-14-armv8
+          compiler: apple-clang
+          version: 14
+          os: macos-14
+          arch: armv8
+          SDKROOT: /Applications/Xcode_14.3.1.app
+          allow_failure: false
+        - build_name: apple-clang-15-armv8
+          compiler: apple-clang
+          version: 15
+          os: macos-14
+          arch: armv8
+          SDKROOT: /Applications/Xcode_15.2.app
+          allow_failure: false
+        - build_name: msvc-2019
+          compiler: msvc
+          version: 192
+          os: windows-2019
+          arch: x86_64
+          allow_failure: false
+        - build_name: msvc-2022
+          compiler: msvc
+          version: 193
+          os: windows-2022
+          arch: x86_64
+          allow_failure: false
+
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"  # 3.10 is the first one to have a prebuilt binary for macos-14 (arm64)
+
+    - name: Setup Conan
+      id: setup-conan
+      shell: bash
+      run: |
+        set -x
+
+        pip install "conan>=2"
+
+        conan --version
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          DIR_SEP="\\"
+        else
+          DIR_SEP="/"
+        fi
+        export CONAN_USER_HOME="${{ github.workspace }}${DIR_SEP}conan-cache"
+        echo "CONAN_USER_HOME=$CONAN_USER_HOME" >> "$GITHUB_OUTPUT"
+        echo CONAN_USER_HOME="$CONAN_USER_HOME" >> $GITHUB_ENV
+
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          sudo xcode-select -switch "${{ matrix.SDKROOT }}"
+          clang --version
+          sdk_path=$(xcrun --sdk macosx --show-sdk-path)
+          echo "sdk_path=$sdk_path" >> $GITHUB_ENV
+          # These macs don't have the -f option... dunno if brew coreutils is isntalled... Just use python to read the symlink
+          # readlink -f $sdk_path
+          python -c "import os; print(os.path.realpath('$sdk_path'))"
+          # maybe hardcode conf.tools.apple:sdk_path in profile?"
+
+          # The openssl@3 package installed on CI adds these files to the pkgconfig directory
+          # Remove them here so they aren't found instead of the version of OpenSSL built by Conan
+          # I should have fixed this, but better safe
+          brew --prefix
+          rm -Rf $(brew --prefix)/lib/pkgconfig/libcrypto.pc
+          rm -Rf $(brew --prefix)/lib/pkgconfig/libssl.pc
+          rm -Rf $(brew --prefix)/lib/pkgconfig/openssl.pc
+
+        elif [ "${{ matrix.compiler }}" = "gcc" ]; then
+          CC=/usr/bin/gcc-${{ matrix.version }}
+          # echo "CC=/usr/bin/gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          # echo "CXX=/usr/bin/g++-${{ matrix.version }}" >> $GITHUB_ENV
+          # echo "FC=/usr/bin/gfortran-${{ matrix.version }}" >> $GITHUB_ENV
+          # CONAN_PROFILE="gcc${{ matrix.version }}"
+
+          if [ -x "$CC" ]; then
+            echo "Ok, $CC exists"
+          else
+            # Note: there is no gcc 12 on that ppa for Focal (20.04)
+            sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+            sudo apt update -qq
+            sudo apt install -y gcc-${{ matrix.version }} g++-${{ matrix.version }}
+            # No need for gfortran-${{ matrix.version }}
+          fi
+
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.version }} 100 --slave /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.version }} --slave /usr/bin/gcov gcov /usr/bin/gcov-${{ matrix.version }} --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-${{ matrix.version }}
+          gcc --version
+        fi
+
+        export CONAN_HOME="$CONAN_USER_HOME${DIR_SEP}.conan2"
+        CONAN_PROFILE_DEFAULT="$CONAN_HOME${DIR_SEP}profiles${DIR_SEP}default"
+
+        conan profile detect --force --name default
+        conan profile path default
+        cat $CONAN_PROFILE_DEFAULT
+        # Mac has the FreeBSD flavor of sed and MUST take a backup suffix...
+        sed -i.bak 's/cppstd=.*$/cppstd=20/g' $CONAN_PROFILE_DEFAULT
+        sed -i.bak 's/build_type=.*$/build_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+        # Windows only
+        sed -i.bak 's/compiler.runtime_type=.*$/compiler.runtime_type=${{ matrix.build_type }}/g' $CONAN_PROFILE_DEFAULT
+        # if [ "${{ matrix.compiler}}" == "Visual Studio" ]; then
+        #   # Remove these
+        #   sed -i.bak '/cppstd=.*/d' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak '/compiler.runtime/d' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak '/compiler.version/d' $CONAN_PROFILE_DEFAULT
+        #   # Set to visual studio
+        #   sed -i.bak 's/compiler=.*$/compiler=${{ matrix.compiler }}/g' $CONAN_PROFILE_DEFAULT
+        #   sed -i.bak 's/compiler.version=.*$/compiler.version=${{ matrix.version }}/g' $CONAN_PROFILE_DEFAULT
+        # fi
+        rm -Rf $CONAN_PROFILE_DEFAULT.bak || true
+        conan profile show
+
+        echo "core:non_interactive = True" >> $CONAN_HOME/global.conf
+        echo "core.download:parallel = {{os.cpu_count() - 2}}" >> $CONAN_HOME/global.conf
+        echo "core.sources:download_cache = $CONAN_USER_HOME/.conan-download-cache" >> $CONAN_HOME/global.conf
+        cat $CONAN_HOME/global.conf
+
+        echo CONAN_HOME="$CONAN_HOME" >> $GITHUB_ENV
+        echo CONAN_PROFILE_DEFAULT="$CONAN_PROFILE_DEFAULT" >> $GITHUB_ENV
+
+        # Use lowercase based on repository owner, so that NREL -> nrel.
+        # That should work on forks, while not replacing 'nrel' with '***' everywhere like it does when you set CONAN_USERNAME as a repo secret...
+        # We want BPT/CPT to produces openstudio_ruby/2.7.2@<CONAN_USERNAME>/<channel>
+        # TODO: I actually do NOT want to set it now! so rename to REPO_USERNAME
+        REPO_USERNAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        echo "REPO_USERNAME=$REPO_USERNAME" >> $GITHUB_ENV
+
+        # (Can't do that before we've se the CONAN_HOME / CONAN_USER_HOME)
+        if [[ "$VERIFY_SSL" == "false" ]]; then
+          conan remote add --force --insecure nrel-v2 http://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
+        else
+          conan remote add --force nrel-v2 https://conan.openstudio.net/artifactory/api/conan/conan-v2 # ${{ secrets.CONAN_UPLOAD }}
+        fi
+        conan remote list
+
+    - name: Setup Conan Cache
+      uses: actions/cache@v4
+      id: cacheconan
+      with:
+        path: |
+          ${{ env.CONAN_USER_HOME }}/.conan-download-cache
+          ${{ env.CONAN_USER_HOME }}/short
+          ${{ env.CONAN_HOME }}/p
+          ${{ env.CONAN_HOME }}/data
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=3.2.2-cachekey=${{ secrets.CACHE_KEY }}
+        restore-keys: |
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=3.2.2-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
+
+    - name: Did restoring the conan-cache work? Yes
+      if: steps.cacheconan.outputs.cache-hit == 'true'
+      run: |
+        echo "Yes"
+
+    - name: Debug
+      shell: bash
+      run: |
+        set -x
+        set +e
+        cat $CONAN_PROFILE_DEFAULT
+        ls $CONAN_HOME
+        ls $CONAN_USER_HOME/.conan-download-cache
+        cat $CONAN_HOME/global.conf
+        ls $CONAN_USER_HOME/short
+        conan config show core.download:download_cache
+        conan config show core.sources:download_cache
+        exit 0
+
+
+    - name: build ${{ matrix.arch }}
+      shell: bash
+      run: |
+        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conanfile.py
+        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conan.lock
+
+        conan_command="-s:a compiler.cppstd=20  -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
+          conan_command="$conan_command -c tools.build:cxxflags=\"['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']\""
+        fi
+
+        echo "conan_command=$conan_command"
+        set +e
+        conan install --output-folder=./build $conan_command 2> >(tee conan_output >&2)
+        code=${PIPESTATUS[0]}
+        set -e
+        echo $code
+        case $code in
+          0)
+            ICON=":white_check_mark:"
+            ;;
+          6)
+            ICON=":arrow_right_hook:"
+            ;;
+          1)
+            ICON=":x:"
+            ;;
+          *)
+            ICON=":interrobang: $code"
+            ;;
+        esac
+        if grep -Fq "conan graph explain" conan_output; then
+          conan graph explain $conan_command
+        fi
+        # Too many runs, just do a step summary if it fails
+        if [ $code -ne 0 ]; then
+          echo "| os | compiler | version | build_type | arch | result |" >> $GITHUB_STEP_SUMMARY
+          echo "| -- | -------- | ------- | ---------- | ---- | ------ |" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ matrix.os }} | ${{ matrix.compiler }} | ${{ matrix.version }} | ${{ matrix.build_type }} | ${{ matrix.arch }} | $ICON |" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ $code -ne 6 ]; then
+          exit "$code"
+        fi
+        exit 0
+
+    - name: Upload to remote
+      shell: bash
+      if: ${{ github.event_name == 'push' && (contains(github.ref, 'refs/tags') || github.ref == 'refs/heads/main') }}
+      run: |
+        set -x
+        conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
+        conan upload -r nrel-v2 --confirm '*'
+
+    - name: Remove non-critical folders from the cache
+      shell: bash
+      run: |
+        set -x
+        conan cache clean --source --build --download --temp
+
