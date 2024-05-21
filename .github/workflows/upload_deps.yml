@@ -315,7 +315,6 @@ jobs:
 
     - name: Upload to remote
       shell: bash
-      if: ${{ github.event_name == 'push' && (contains(github.ref, 'refs/tags') || github.ref == 'refs/heads/main') }}
       run: |
         set -x
         conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
@@ -325,5 +324,6 @@ jobs:
       shell: bash
       run: |
         set -x
+        du -sh ~/.conan2/p || true
         conan cache clean --source --build --download --temp
 
