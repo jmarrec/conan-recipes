@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022]
-        build_type: [Release, Debug]
+        build_type: [Release]
         include:
         - build_name: gcc-9
           compiler: gcc
