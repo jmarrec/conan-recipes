@@ -318,13 +318,7 @@ jobs:
       run: |
         set -x
         conan remote login nrel-v2 ${{ secrets.CONAN_LOGIN_USERNAME }} -p ${{ secrets.CONAN_PASSWORD }}
-        if [[ "${{ env.build_name }}" == "gcc-9" ]]; then
-          # For dependencies that do not depend on compiler version, we want to prefer the oldest compiler
-          # so we avoid ABI issues such as "version `GLIBC_2.33' not found"
-          conan upload -r nrel-v2 --confirm '*' --force
-        else
-          conan upload -r nrel-v2 --confirm '*'
-        fi
+        conan upload -r nrel-v2 --confirm '*'
 
     - name: Remove non-critical folders from the cache
       shell: bash
