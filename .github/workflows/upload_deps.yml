@@ -20,8 +20,8 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-9] #, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022]
-        build_type: [Release, Debug]
+        build_name: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, apple-clang-11, apple-clang-12, apple-clang-13, apple-clang-14, apple-clang-15, apple-clang-14-armv8, apple-clang-15-armv8, msvc-2019, msvc-2022]
+        build_type: [Release]
         include:
         - build_name: gcc-9
           compiler: gcc
@@ -30,96 +30,96 @@ jobs:
           arch: x86_64
           allow_failure: false
           # dockerImage: conanio/gcc9-ubuntu16.04:latest
-        #- build_name: gcc-10
-          #compiler: gcc
-          #version: 10
-          #os: ubuntu-20.04
-          #arch: x86_64
-          #allow_failure: false
-          ## dockerImage: conanio/gcc10-ubuntu16.04:latest
-        #- build_name: gcc-11
-          #compiler: gcc
-          #version: 11
-          #os: ubuntu-22.04
-          #arch: x86_64
-          #allow_failure: false
-          ## dockerImage: conanio/gcc11-ubuntu16.04:latest
-        #- build_name: gcc-12
-          #compiler: gcc
-          #version: 12
-          #os: ubuntu-22.04
-          #arch: x86_64
-          #allow_failure: false
-          ## dockerImage: conanio/gcc12-ubuntu16.04:latest
-        #- build_name: gcc-13
-          #compiler: gcc
-          #version: 13
-          #os: ubuntu-22.04
-          #arch: x86_64
-          #allow_failure: false
-          ## dockerImage: conanio/gcc13-ubuntu16.04:latest
-        #- build_name: apple-clang-11
-          #compiler: apple-clang
-          #version: 11
-          #os: macos-11
-          #arch: x86_64
-          #SDKROOT: /Applications/Xcode_11.7.app
-          #allow_failure: false
-        #- build_name: apple-clang-12
-          #compiler: apple-clang
-          #version: 12
-          #os: macos-11
-          #arch: x86_64
-          #SDKROOT: /Applications/Xcode_12.4.app
-          #allow_failure: false
-        #- build_name: apple-clang-13
-          #compiler: apple-clang
-          #version: 13
-          #os: macos-12
-          #arch: x86_64
-          #SDKROOT: /Applications/Xcode_13.2.1.app
-          #allow_failure: false
-        #- build_name: apple-clang-14
-          #compiler: apple-clang
-          #version: 14
-          #os: macos-13
-          #arch: x86_64
-          #SDKROOT: /Applications/Xcode_14.3.1.app
-          ## macos-12  /Applications/Xcode_14.2.app
-          #allow_failure: false
-        #- build_name: apple-clang-15
-          #compiler: apple-clang
-          #version: 15
-          #os: macos-13
-          #arch: x86_64
-          #SDKROOT: /Applications/Xcode_15.2.app
-          #allow_failure: false
-        #- build_name: apple-clang-14-armv8
-          #compiler: apple-clang
-          #version: 14
-          #os: macos-14
-          #arch: armv8
-          #SDKROOT: /Applications/Xcode_14.3.1.app
-          #allow_failure: false
-        #- build_name: apple-clang-15-armv8
-          #compiler: apple-clang
-          #version: 15
-          #os: macos-14
-          #arch: armv8
-          #SDKROOT: /Applications/Xcode_15.2.app
-          #allow_failure: false
-        #- build_name: msvc-2019
-          #compiler: msvc
-          #version: 192
-          #os: windows-2019
-          #arch: x86_64
-          #allow_failure: false
-        #- build_name: msvc-2022
-          #compiler: msvc
-          #version: 193
-          #os: windows-2022
-          #arch: x86_64
-          #allow_failure: false
+        - build_name: gcc-10
+          compiler: gcc
+          version: 10
+          os: ubuntu-20.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc10-ubuntu16.04:latest
+        - build_name: gcc-11
+          compiler: gcc
+          version: 11
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc11-ubuntu16.04:latest
+        - build_name: gcc-12
+          compiler: gcc
+          version: 12
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc12-ubuntu16.04:latest
+        - build_name: gcc-13
+          compiler: gcc
+          version: 13
+          os: ubuntu-22.04
+          arch: x86_64
+          allow_failure: false
+          # dockerImage: conanio/gcc13-ubuntu16.04:latest
+        - build_name: apple-clang-11
+          compiler: apple-clang
+          version: 11
+          os: macos-11
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_11.7.app
+          allow_failure: false
+        - build_name: apple-clang-12
+          compiler: apple-clang
+          version: 12
+          os: macos-11
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_12.4.app
+          allow_failure: false
+        - build_name: apple-clang-13
+          compiler: apple-clang
+          version: 13
+          os: macos-12
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_13.2.1.app
+          allow_failure: false
+        - build_name: apple-clang-14
+          compiler: apple-clang
+          version: 14
+          os: macos-13
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_14.3.1.app
+          # macos-12  /Applications/Xcode_14.2.app
+          allow_failure: false
+        - build_name: apple-clang-15
+          compiler: apple-clang
+          version: 15
+          os: macos-13
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_15.2.app
+          allow_failure: false
+        - build_name: apple-clang-14-armv8
+          compiler: apple-clang
+          version: 14
+          os: macos-14
+          arch: armv8
+          SDKROOT: /Applications/Xcode_14.3.1.app
+          allow_failure: false
+        - build_name: apple-clang-15-armv8
+          compiler: apple-clang
+          version: 15
+          os: macos-14
+          arch: armv8
+          SDKROOT: /Applications/Xcode_15.2.app
+          allow_failure: false
+        - build_name: msvc-2019
+          compiler: msvc
+          version: 192
+          os: windows-2019
+          arch: x86_64
+          allow_failure: false
+        - build_name: msvc-2022
+          compiler: msvc
+          version: 193
+          os: windows-2022
+          arch: x86_64
+          allow_failure: false
 
     steps:
     - uses: actions/setup-python@v5
@@ -229,7 +229,22 @@ jobs:
         fi
         conan remote list
 
-
+    - name: Setup Conan Cache
+      uses: actions/cache@v4
+      id: cacheconan
+      with:
+        path: |
+          ${{ env.CONAN_USER_HOME }}/.conan-download-cache
+          ${{ env.CONAN_USER_HOME }}/short
+          ${{ env.CONAN_HOME }}/p
+          ${{ env.CONAN_HOME }}/data
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=3.2.2-cachekey=${{ secrets.CACHE_KEY }}
+        restore-keys: |
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=3.2.2-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
 
     - name: Did restoring the conan-cache work? Yes
       if: steps.cacheconan.outputs.cache-hit == 'true'
@@ -257,14 +272,14 @@ jobs:
         aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conanfile.py
         aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conan.lock
 
-        conan_command="-s:a compiler.cppstd=20  -s:a build_type=${{ matrix.build_type }} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
+        conan_command="-s:a compiler.cppstd=20  -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
         echo "conan_command=$conan_command"
         set +e
         if [ "$RUNNER_OS" == "macOS" ]; then
           # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
           conan install --output-folder=./build -c tools.build:cxxflags="['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']" $conan_command 2> >(tee conan_output >&2)
         else
-          conan install --build='*' --output-folder=./build $conan_command 2> >(tee conan_output >&2)
+          conan install --output-folder=./build $conan_command 2> >(tee conan_output >&2)
         fi
 
         code=${PIPESTATUS[0]}
