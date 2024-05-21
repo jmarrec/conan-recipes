@@ -273,14 +273,15 @@ jobs:
         aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conan.lock
 
         conan_command="-s:a compiler.cppstd=20  -s:a build_type=${{ matrix.build_type }} --build missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True ."
-        if [ "$RUNNER_OS" == "macOS" ]; then
-          # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
-          conan_command="$conan_command -c tools.build:cxxflags=\"['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']\""
-        fi
-
         echo "conan_command=$conan_command"
         set +e
-        conan install --output-folder=./build $conan_command 2> >(tee conan_output >&2)
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
+          conan install --output-folder=./build -c tools.build:cxxflags="['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']" $conan_command 2> >(tee conan_output >&2)
+        else
+          conan install --output-folder=./build $conan_command 2> >(tee conan_output >&2)
+        fi
+
         code=${PIPESTATUS[0]}
         set -e
         echo $code
