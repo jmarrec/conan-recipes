@@ -148,6 +148,9 @@ jobs:
           arch: x86
           allow_failure: false
           build_strategy: 'missing'
+        exclude:
+        - build_name: msvc-2022-i386
+          build_type: Debug
 
     steps:
     - uses: actions/setup-python@v5
@@ -306,6 +309,9 @@ jobs:
         if [ "$RUNNER_OS" == "macOS" ]; then
           # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
           conan_command+=(-c tools.build:cxxflags="['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']")
+        fi
+        if [ "${{ matrix.build_name }}" == "msvc-2022-i386"]; then
+          conan_command+=(-o with_testing=False -o with_benchmark=False -o with_ruby=False -o with_python=False -o with_csharp=True)
         fi
 
         echo "conan_command=${conan_command[@]}"
