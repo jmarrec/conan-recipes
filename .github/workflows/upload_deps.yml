@@ -2,6 +2,11 @@ name: Upload OpenStudio SDK deps
 
 on:
   workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'OpenStudio SDK branch where to grab the conanfile.py and conan.lock'
+        required: true
+        default: 'develop'
 
 env:
   VERIFY_SSL: true
@@ -285,8 +290,8 @@ jobs:
     - name: build ${{ matrix.arch }}
       shell: bash
       run: |
-        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conanfile.py
-        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/develop/conan.lock
+        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/${{ github.event.inputs.branch_name}}/conanfile.py
+        aria2c https://raw.githubusercontent.com/NREL/OpenStudio/${{ github.event.inputs.branch_name}}/conan.lock
 
         # Using a bash array to avoid quoting issues
         conan_command=(-s:a compiler.cppstd=20 -s:a build_type=${{ matrix.build_type }} --build=${{ matrix.build_strategy }} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True .)
