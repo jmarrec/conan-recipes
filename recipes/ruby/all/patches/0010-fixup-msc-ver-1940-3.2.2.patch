@@ -1,0 +1,16 @@
+Subject: Patch MSC_VER for MSVC 17.10.2 (_MSC_VER is 1940)
+
+diff --git win32/setup.mak win32/setup.mak
+--- win32/setup.mak
++++ win32/setup.mak
+@@ -197,8 +197,8 @@ echo ABI_VERSION = RUBY_ABI_VERSION
+ #endif
+ set /a MSC_VER = _MSC_VER
+ #if _MSC_VER >= 1920
+-set /a MSC_VER_LOWER = MSC_VER/20*20+0
+-set /a MSC_VER_UPPER = MSC_VER/20*20+19
++set /a MSC_VER_LOWER = 1920
++set /a MSC_VER_UPPER = 1959
+ #elif _MSC_VER >= 1900
+ set /a MSC_VER_LOWER = MSC_VER/10*10+0
+ set /a MSC_VER_UPPER = MSC_VER/10*10+9
