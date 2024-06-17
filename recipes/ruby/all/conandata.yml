@@ -38,6 +38,9 @@ patches:
       patch_description: "Replace dmyext / dmyenc (no-op) with the extinit.c encinit.c"
       patch_type: "portability"
       patch_source: "cf https://bugs.ruby-lang.org/issues/19758"
+    - patch_file: "patches/0010-fixup-msc-ver-1940-3.3.0.patch"
+      patch_description: "Patch MSC_VER for MSVC 17.10.2 (_MSC_VER is 1940)"
+      patch_type: "portability"
   "3.2.2":
     - patch_file: "patches/0001-darwin-includedir-3.2.2.patch"
       patch_description: "Remove SDKROOT on macOS"
@@ -67,6 +70,9 @@ patches:
       patch_description: "Replace dmyext / dmyenc (no-op) with the extinit.c encinit.c"
       patch_type: "portability"
       patch_source: "cf https://bugs.ruby-lang.org/issues/19758"
+    - patch_file: "patches/0010-fixup-msc-ver-1940-3.2.2.patch"
+      patch_description: "Patch MSC_VER for MSVC 17.10.2 (_MSC_VER is 1940)"
+      patch_type: "portability"
   "3.1.0":
     - patch_file: "patches/0001-darwin-includedir-3.1.0.patch"
       patch_description: "Remove SDKROOT on macOS"
@@ -97,4 +103,7 @@ patches:
       patch_type: "backport"
     - patch_file: "patches/0010-fixup-libruby-static-3.1.0.patch"
       patch_description: "Replace dmyext / dmyenc (no-op) with the extinit.c encinit.c"
+      patch_type: "portability"
+    - patch_file: "patches/0010-fixup-msc-ver-1940-3.1.0.patch"
+      patch_description: "Patch MSC_VER for MSVC 17.10.2 (_MSC_VER is 1940)"
       patch_type: "portability"
