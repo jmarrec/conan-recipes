@@ -294,7 +294,8 @@ jobs:
         set +e
         if [ "$RUNNER_OS" == "macOS" ]; then
           # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
-          conan_command+=(-c tools.build:cxxflags="['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']")
+          # Avoid ./boost/mpl/aux_/integral_wrapper.hpp:73:31: error: integer value -1 is outside the valid range of values [0, 3] for the enumeration type 'int_float_mixture_enum' [-Wenum-constexpr-conversion]
+          conan_command+=(-c tools.build:cxxflags="['-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION', '-Wno-enum-constexpr-conversion']")
         fi
         if [ "${{ matrix.build_name }}" == "msvc-2022-i386" ]; then
           conan_command+=(-o with_testing=False -o with_benchmark=False -o with_ruby=False -o with_python=False -o with_csharp=True)
