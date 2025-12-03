@@ -25,18 +25,10 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-10, gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-14, apple-clang-15, apple-clang-15-armv8, apple-clang-16-armv8, msvc-2019, msvc-2022, msvc-2022-i386]
+        build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-14, apple-clang-15, apple-clang-15-armv8, apple-clang-16-armv8, msvc-2019, msvc-2022, msvc-2022-i386]
         build_type: [Release, Debug]
         # Right now, conan-center uses gcc-11 (and apple-clang 13, but that shoudln't be a problem) which is at risk of causing ABI compatibiliy issues (GLIBC/GLIBCXX version mistmatches)
-        # So we set it to build all for gcc-9 and gcc-10
         include:
-        - build_name: gcc-10
-          compiler: gcc
-          version: 10
-          os: ubuntu-22.04
-          arch: x86_64
-          allow_failure: false
-          build_strategy: '*'
         - build_name: gcc-11
           compiler: gcc
           version: 11
