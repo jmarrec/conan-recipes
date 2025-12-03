@@ -25,7 +25,7 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-14, apple-clang-15, apple-clang-15-armv8, apple-clang-16-armv8, msvc-2019, msvc-2022, msvc-2022-i386]
+        build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-14, apple-clang-15, apple-clang-16, apple-clang-17, apple-clang-15-armv8, apple-clang-16-armv8, apple-clang-17-armv8, msvc-2019, msvc-2022, msvc-2022-i386]
         build_type: [Release, Debug]
         # Right now, conan-center uses gcc-11 (and apple-clang 13, but that shoudln't be a problem) which is at risk of causing ABI compatibiliy issues (GLIBC/GLIBCXX version mistmatches)
         include:
@@ -76,7 +76,7 @@ jobs:
           version: 14
           os: macos-13
           arch: x86_64
-          SDKROOT: /Applications/Xcode_14.3.1.app
+          SDKROOT: /Applications/Xcode_14.3.app
           allow_failure: false
           build_strategy: 'missing'
         - build_name: apple-clang-15
@@ -87,20 +87,44 @@ jobs:
           SDKROOT: /Applications/Xcode_15.2.app
           allow_failure: false
           build_strategy: 'missing'
+        - build_name: apple-clang-16
+          compiler: apple-clang
+          version: 16
+          os: macos-15-intel
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_16.2.app
+          allow_failure: false
+          build_strategy: 'missing'
+        - build_name: apple-clang-17
+          compiler: apple-clang
+          version: 17
+          os: macos-15-intel
+          arch: x86_64
+          SDKROOT: /Applications/Xcode_16.4.app
+          allow_failure: false
+          build_strategy: 'missing'
         - build_name: apple-clang-15-armv8
           compiler: apple-clang
           version: 15
           os: macos-14
           arch: armv8
-          SDKROOT: /Applications/Xcode_15.2.app
+          SDKROOT: /Applications/Xcode_15.4.app
           allow_failure: false
           build_strategy: 'missing'
         - build_name: apple-clang-16-armv8
           compiler: apple-clang
           version: 16
-          os: macos-14
+          os: macos-15
           arch: armv8
           SDKROOT: /Applications/Xcode_16.2.app
+          allow_failure: false
+          build_strategy: 'missing'
+        - build_name: apple-clang-17-armv8
+          compiler: apple-clang
+          version: 17
+          os: macos-15
+          arch: armv8
+          SDKROOT: /Applications/Xcode_16.4.app
           allow_failure: false
           build_strategy: 'missing'
         - build_name: msvc-2019
