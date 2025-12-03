@@ -1,0 +1,93 @@
+name: Test Clang
+
+on:
+  push:
+    branches: [ main, bump_runners ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  VERIFY_SSL: true
+
+jobs:
+  build:
+
+    name: "${{ matrix.os }} (${{ matrix.arch }})"
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-15-intel, macos-14, macos-15, macos-26]
+        include:
+        - os: macos-13
+          arch: x86_64
+        - os: macos-15-intel
+          arch: x86_64
+        - os: macos-14
+          arch: armv8
+        - os: macos-15
+          arch: armv8
+        - os: macos-26
+          arch: armv8
+
+
+    steps:
+    - name: Show Xcode versions
+      shell: bash
+      run: |
+        set -x
+
+        begin_group() { echo -e "::group::\033[93m$1\033[0m"; }
+
+        begin_group "Default"
+        xcrun --sdk macosx --show-sdk-path
+        clang --version
+        which clang
+        echo "::endgroup::"
+
+        for xcode in $(find /Applications -name "Xcode_*.app" -type d -maxdepth 1); do
+          begin_group "$xcode"
+          sudo xcode-select -switch $xcode
+          clang --version
+          which clang
+          echo "::endgroup::"
+        done
+
+        pip install markdown
+
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+
+    - name: produce a table
+      shell: python
+      run: |
+        import os
+        from pathlib import Path
+        import subprocess
+
+        def get_clang_version():
+            result = subprocess.check_output(['clang', '--version'], text=True)
+            return result.splitlines()[0]
+
+        def get_xcode_version():
+            result = subprocess.check_output(['xcodebuild', '-version'], text=True)
+            return result.splitlines()[0].split(' ')[-1]
+
+        def print_and_append_to_github_step_summary(line):
+            print(line)
+            summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+            if not summary_path:
+                return
+            with Path(summary_path).open("a", encoding="utf-8") as f:
+                f.write(line + "\n")
+
+        xcode_paths = sorted(Path('/Applications').glob('Xcode_*.app'))
+        print_and_append_to_github_step_summary("| Runner | arch | Xcode Version | Build | Clang Version |")
+        print_and_append_to_github_step_summary("|--------|------|---------------|-------|---------------|")
+        for xcode_path in xcode_paths:
+            subprocess.check_call(['sudo', 'xcode-select', '-switch', str(xcode_path)])
+            clang_version = get_clang_version()
+            print_and_append_to_github_step_summary(f"| ${{ matrix.os }} | ${{ matrix.arch }} | {xcode_path.stem} | {get_xcode_version()} | {get_clang_version()} |")
