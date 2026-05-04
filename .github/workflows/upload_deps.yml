@@ -300,6 +300,15 @@ jobs:
 
         # Using a bash array to avoid quoting issues
         conan_command=(-s:a compiler.cppstd=20 -s:a build_type=${{ matrix.build_type }} --build=${{ matrix.build_strategy }} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s:h arch=${{ matrix.arch }} .)
+        # Force build-tool packages from source on ubuntu-22.04 / ubuntu-22.04-arm.
+        # These packages use `del self.info.settings.compiler` in package_id(), so
+        # Conan assigns them the same ID regardless of compiler/distro. A binary built
+        # on ubuntu-24.04 (GLIBC 2.38 / GLIBCXX 3.4.32) would otherwise be downloaded
+        # on ubuntu-22.04 (GLIBC 2.35 / GLIBCXX 3.4.30), causing runtime failures.
+        # Affected packages in the OpenStudio dependency graph: swig (100 %sure), and potentially automake, m4, ninja, pkgconf
+        if [[ "${{ matrix.os }}" == ubuntu-22.04* ]]; then
+          conan_command+=(--build=swig --build=automake --build=m4 --build=ninja --build=pkgconf)
+        fi
         set +e
         if [ "$RUNNER_OS" == "macOS" ]; then
           # Avoid "builtin __has_nothrow_assign is deprecated; use __is_nothrow_assignable instead" in boost/1.79 with recent clang
