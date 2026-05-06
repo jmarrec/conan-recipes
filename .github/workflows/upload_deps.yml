@@ -299,7 +299,7 @@ jobs:
         aria2c https://raw.githubusercontent.com/NREL/OpenStudio/${{ github.event.inputs.branch_name}}/conan.lock
 
         # Using a bash array to avoid quoting issues
-        conan_command=(-s:a compiler.cppstd=20 -s:a build_type=${{ matrix.build_type }} --build=${{ matrix.build_strategy }} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s:h arch=${{ matrix.arch }} .)
+        conan_command=(-s:a compiler.cppstd=20 -s:a build_type=${{ matrix.build_type }} --build=${{ matrix.build_strategy }} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s:h arch=${{ matrix.arch }} --lockfile-partial --lockfile-out=conan_new.lock .)
         # Force build-tool packages from source on ubuntu-22.04 / ubuntu-22.04-arm.
         # These packages use `del self.info.settings.compiler` in package_id(), so
         # Conan assigns them the same ID regardless of compiler/distro. A binary built
@@ -321,6 +321,8 @@ jobs:
 
         echo "conan_command=${conan_command[@]}"
         conan install --output-folder=./build "${conan_command[@]}" 2> >(tee conan_output >&2)
+        echo "=== diff conan.lock vs conan_new.lock ==="
+        diff -u conan.lock conan_new.lock || true
 
         code=${PIPESTATUS[0]}
         set -e
