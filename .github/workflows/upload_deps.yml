@@ -307,7 +307,7 @@ jobs:
         # on ubuntu-22.04 (GLIBC 2.35 / GLIBCXX 3.4.30), causing runtime failures.
         # Affected packages in the OpenStudio dependency graph: swig (100 %sure), and potentially automake, m4, ninja, pkgconf
         if [[ "${{ matrix.os }}" == ubuntu-22.04* ]]; then
-          conan_command+=(--build=swig --build=automake --build=m4 --build=ninja --build=pkgconf)
+          conan_command+=("--build=swig*" "--build=automake*" "--build=m4*" "--build=ninja*" "--build=pkgconf*")
         fi
         set +e
         if [ "$RUNNER_OS" == "macOS" ]; then
