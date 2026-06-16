@@ -1,13 +1,18 @@
-Subject: Allow windows arm64-mswin
+Subject: [PATCH] Allow windows arm64-mswin + fix MACHINE detection in setup.mak
 
-Backport of https://github.com/ruby/ruby/pull/12367
+Backport of https://github.com/ruby/ruby/pull/12367 plus fix for arm64
+MACHINE detection in win32/setup.mak (backport from Ruby 3.4.1).
+
+Without _M_ARM64 check in setup.mak, MACHINE falls back to x86 -> ARCH=i386 ->
+sitearch=i386-mswin64_140 -> SIZEOF_VOIDP=4 -> STATIC_ASSERT in value.h fails.
 ---
  coroutine/arm64/Context.asm    | 81 ++++++++++++++++++++++++++++++++++
  coroutine/arm64/Context.h      |  8 +++-
  include/ruby/internal/memory.h | 11 ++++-
  vm_dump.c                      |  8 ++++
  win32/Makefile.sub             |  6 +++
- 5 files changed, 112 insertions(+), 2 deletions(-)
+ win32/setup.mak                |  6 ++-
+ 6 files changed, 117 insertions(+), 3 deletions(-)
  create mode 100644 coroutine/arm64/Context.asm
 
 diff --git a/coroutine/arm64/Context.asm b/coroutine/arm64/Context.asm
@@ -202,6 +207,30 @@ index b8c16b8b..643d2ef8 100644
  
  {$(srcdir)/enc/trans}.c.obj:
  	$(ECHO) compiling $(<:\=/)
+diff --git a/win32/setup.mak b/win32/setup.mak
+index a1a0ce49..b8e61349 100644
+--- a/win32/setup.mak
++++ b/win32/setup.mak
+@@ -227,7 +227,9 @@ RUBY_SO_NAME = $(RUBY_SO_NAME)
+ 
+ -generic-: nul
+ 	@$(CPP) <<conftest.c 2>nul | findstr = >>$(MAKEFILE)
+-#if defined _M_X64
++#if defined _M_ARM64
++MACHINE = arm64
++#elif defined _M_X64
+ MACHINE = x64
+ #else
+ MACHINE = x86
+@@ -241,6 +243,8 @@ MACHINE = x86
+ 	@echo MACHINE = alpha>>$(MAKEFILE)
+ -x64-: -osname64-
+ 	@echo MACHINE = x64>>$(MAKEFILE)
++-arm64-: -osname64-
++	@echo MACHINE = arm64>>$(MAKEFILE)
+ -ix86-: -osname32-
+ 	@echo MACHINE = x86>>$(MAKEFILE)
+ 
 -- 
 2.50.1 (Apple Git-155)
 
