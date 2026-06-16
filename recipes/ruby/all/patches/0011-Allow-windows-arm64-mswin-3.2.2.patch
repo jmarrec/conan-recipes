@@ -1,0 +1,207 @@
+Subject: Allow windows arm64-mswin
+
+Backport of https://github.com/ruby/ruby/pull/12367
+---
+ coroutine/arm64/Context.asm    | 81 ++++++++++++++++++++++++++++++++++
+ coroutine/arm64/Context.h      |  8 +++-
+ include/ruby/internal/memory.h | 11 ++++-
+ vm_dump.c                      |  8 ++++
+ win32/Makefile.sub             |  6 +++
+ 5 files changed, 112 insertions(+), 2 deletions(-)
+ create mode 100644 coroutine/arm64/Context.asm
+
+diff --git a/coroutine/arm64/Context.asm b/coroutine/arm64/Context.asm
+new file mode 100644
+index 00000000..866fa628
+--- /dev/null
++++ b/coroutine/arm64/Context.asm
+@@ -0,0 +1,81 @@
++	TTL	coroutine/arm64/Context.asm
++
++	AREA	|.drectve|, DRECTVE
++
++	EXPORT	|coroutine_transfer|
++
++	AREA	|.text$mn|, CODE, ARM64
++
++;; Add more space for certain TEB values on each stack
++TEB_OFFSET EQU 0x20
++
++;; Incomplete implementation
++coroutine_transfer PROC
++	; Make space on the stack for caller registers
++	sub sp, sp, 0xa0 + TEB_OFFSET
++
++	; Save caller registers
++	stp d8, d9, [sp, 0x00 + TEB_OFFSET]
++	stp d10, d11, [sp, 0x10 + TEB_OFFSET]
++	stp d12, d13, [sp, 0x20 + TEB_OFFSET]
++	stp d14, d15, [sp, 0x30 + TEB_OFFSET]
++	stp x19, x20, [sp, 0x40 + TEB_OFFSET]
++	stp x21, x22, [sp, 0x50 + TEB_OFFSET]
++	stp x23, x24, [sp, 0x60 + TEB_OFFSET]
++	stp x25, x26, [sp, 0x70 + TEB_OFFSET]
++	stp x27, x28, [sp, 0x80 + TEB_OFFSET]
++	stp x29, x30, [sp, 0x90 + TEB_OFFSET]
++
++	;; Save certain values from Thread Environment Block (TEB) x18
++	;; points to the TEB on Windows
++	;; Read TeStackBase and TeStackLimit at ksarm64.h from TEB
++	ldp  x5,  x6,  [x18, #0x08]
++	;; Save them
++	stp  x5,  x6,  [sp, #0x00]
++	;; Read TeDeallocationStack at ksarm64.h from TEB
++	ldr  x5, [x18, #0x1478]
++	;; Read TeFiberData at ksarm64.h from TEB
++	ldr  x6, [x18, #0x20]
++	;; Save current fiber data and deallocation stack
++	stp  x5,  x6,  [sp, #0x10]
++
++	; Save stack pointer to x0 (first argument)
++	mov x2, sp
++	str x2, [x0, 0]
++
++	; Load stack pointer from x1 (second argument)
++	ldr x3, [x1, 0]
++	mov sp, x3
++
++	;; Restore stack base and limit
++	ldp  x5,  x6,  [sp, #0x00]
++	;; Write TeStackBase and TeStackLimit at ksarm64.h to TEB
++	stp  x5,  x6,  [x18, #0x08]
++	;; Restore fiber data and deallocation stack
++	ldp  x5,  x6,  [sp, #0x10]
++	;; Write TeDeallocationStack at ksarm64.h to TEB
++	str  x5, [x18, #0x1478]
++	;; Write TeFiberData at ksarm64.h to TEB
++	str  x6, [x18, #0x20]
++
++	; Restore caller registers
++	ldp d8, d9, [sp, 0x00 + TEB_OFFSET]
++	ldp d10, d11, [sp, 0x10 + TEB_OFFSET]
++	ldp d12, d13, [sp, 0x20 + TEB_OFFSET]
++	ldp d14, d15, [sp, 0x30 + TEB_OFFSET]
++	ldp x19, x20, [sp, 0x40 + TEB_OFFSET]
++	ldp x21, x22, [sp, 0x50 + TEB_OFFSET]
++	ldp x23, x24, [sp, 0x60 + TEB_OFFSET]
++	ldp x25, x26, [sp, 0x70 + TEB_OFFSET]
++	ldp x27, x28, [sp, 0x80 + TEB_OFFSET]
++	ldp x29, x30, [sp, 0x90 + TEB_OFFSET]
++
++	; Pop stack frame
++	add sp, sp, 0xa0 + TEB_OFFSET
++
++	; Jump to return address (in x30)
++	ret
++
++	endp
++
++	end
+diff --git a/coroutine/arm64/Context.h b/coroutine/arm64/Context.h
+index 1472621f..fe437e2c 100644
+--- a/coroutine/arm64/Context.h
++++ b/coroutine/arm64/Context.h
+@@ -15,7 +15,13 @@
+ #include <stdint.h>
+ #include <string.h>
+ 
++#if defined __GNUC__
+ #define COROUTINE __attribute__((noreturn)) void
++#define COROUTINE_DECL COROUTINE
++#elif defined _MSC_VER
++#define COROUTINE __declspec(noreturn) void
++#define COROUTINE_DECL void
++#endif
+ 
+ enum {COROUTINE_REGISTERS = 0xb0 / 8};
+ 
+@@ -44,7 +50,7 @@ struct coroutine_context
+ #endif
+ };
+ 
+-typedef COROUTINE(* coroutine_start)(struct coroutine_context *from, struct coroutine_context *self);
++typedef COROUTINE_DECL(* coroutine_start)(struct coroutine_context *from, struct coroutine_context *self);
+ 
+ static inline void coroutine_initialize_main(struct coroutine_context * context) {
+     context->stack_pointer = NULL;
+diff --git a/include/ruby/internal/memory.h b/include/ruby/internal/memory.h
+index 6884db19..e1c993ec 100644
+--- a/include/ruby/internal/memory.h
++++ b/include/ruby/internal/memory.h
+@@ -40,7 +40,12 @@
+ 
+ #if defined(_MSC_VER) && defined(_WIN64)
+ # include <intrin.h>
++# if defined(_M_AMD64)
+ # pragma intrinsic(_umul128)
++# endif
++# if defined(_M_ARM64)
++# pragma intrinsic(__umulh)
++# endif
+ #endif
+ 
+ #include "ruby/internal/attr/alloc_size.h"
+@@ -577,12 +582,16 @@ rbimpl_size_mul_overflow(size_t x, size_t y)
+     ret.left  = dz > SIZE_MAX;
+     ret.right = RBIMPL_CAST((size_t)dz);
+ 
+-#elif defined(_MSC_VER) && defined(_WIN64)
++#elif defined(_MSC_VER) && defined(_M_AMD64)
+     unsigned __int64 dp = 0;
+     unsigned __int64 dz = _umul128(x, y, &dp);
+     ret.left  = RBIMPL_CAST((bool)dp);
+     ret.right = RBIMPL_CAST((size_t)dz);
+ 
++#elif defined(_MSC_VER) && defined(_M_ARM64)
++    ret.left  = __umulh(x, y) != 0;
++    ret.right = x * y;
++
+ #else
+     /* https://wiki.sei.cmu.edu/confluence/display/c/INT30-C.+Ensure+that+unsigned+integer+operations+do+not+wrap */
+     ret.left  = (y != 0) && (x > SIZE_MAX / y);
+diff --git a/vm_dump.c b/vm_dump.c
+index e31d70c0..0611e3c9 100644
+--- a/vm_dump.c
++++ b/vm_dump.c
+@@ -727,6 +727,14 @@ dump_thread(void *arg)
+                     frame.AddrFrame.Offset = context.Rbp;
+                     frame.AddrStack.Mode = AddrModeFlat;
+                     frame.AddrStack.Offset = context.Rsp;
++#elif defined(_M_ARM64) || defined(__aarch64__)
++                    mac = IMAGE_FILE_MACHINE_ARM64;
++                    frame.AddrPC.Mode = AddrModeFlat;
++                    frame.AddrPC.Offset = context.Pc;
++                    frame.AddrFrame.Mode = AddrModeFlat;
++                    frame.AddrFrame.Offset = context.Fp;
++                    frame.AddrStack.Mode = AddrModeFlat;
++                    frame.AddrStack.Offset = context.Sp;
+ #else	/* i386 */
+                     mac = IMAGE_FILE_MACHINE_I386;
+                     frame.AddrPC.Mode = AddrModeFlat;
+diff --git a/win32/Makefile.sub b/win32/Makefile.sub
+index b8c16b8b..643d2ef8 100644
+--- a/win32/Makefile.sub
++++ b/win32/Makefile.sub
+@@ -331,6 +331,9 @@ COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.asm)
+ !elseif "$(ARCH)" == "i386"
+ COROUTINE_OBJ = coroutine/win32/Context.obj
+ COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.asm)
++!elseif "$(ARCH)" == "arm64"
++COROUTINE_OBJ = coroutine/arm64/Context.obj
++COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.asm)
+ !else
+ COROUTINE_OBJ = coroutine/copy/Context.obj
+ COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.c)
+@@ -1286,6 +1289,9 @@ $(ruby_pc): $(RBCONFIG)
+ {$(srcdir)/coroutine/win64}.asm{coroutine/win64}.obj:
+ 	$(ECHO) assembling $(<:\=/)
+ 	$(Q) $(AS) $(ASFLAGS) $(XCFLAGS) $(CPPFLAGS) $(COUTFLAG)$@ -c $(<:\=/)
++{$(srcdir)/coroutine/arm64}.asm{coroutine/arm64}.obj:
++	$(ECHO) assembling $(<:\=/)
++	$(Q) $(AS) $(ASFLAGS) -o $@ $(<:\=/)
+ 
+ {$(srcdir)/enc/trans}.c.obj:
+ 	$(ECHO) compiling $(<:\=/)
+-- 
+2.50.1 (Apple Git-155)
+
