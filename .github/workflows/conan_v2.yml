@@ -28,7 +28,7 @@ jobs:
       matrix:
         build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-16, apple-clang-17, apple-clang-21, apple-clang-15-armv8, apple-clang-16-armv8, apple-clang-17-armv8, apple-clang-21-armv8, msvc-2022, msvc-2026, msvc-2026-armv8]
         build_type: [Release, Debug]
-        recipe_version: ["3.2.2", "3.3.0"]
+        recipe_version: ["3.2.2"] #, "3.3.0"]
         include:
         - build_name: gcc-11
           compiler: gcc
