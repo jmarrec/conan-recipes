@@ -1,7 +1,8 @@
-From 99421456f1cc896ef94f5d4f0a77f2276c1b75ee Mon Sep 17 00:00:00 2001
+From 791ba8cfc75494e7a937b55a266716b84f0ca36a Mon Sep 17 00:00:00 2001
 From: Julien Marrec <julien.marrec@gmail.com>
-Date: Tue, 16 Jun 2026 21:52:03 +0200
-Subject: [PATCH] Allow windows arm64-mswin and fix MACHINE/size detection
+Date: Tue, 16 Jun 2026 21:56:56 +0200
+Subject: [PATCH] Allow windows arm64-mswin and fix MACHINE/size/atomic
+ detection
 
 Backport of https://github.com/ruby/ruby/pull/12367 plus arm64 build fixes
 backported from Ruby 3.4.1:
@@ -9,16 +10,18 @@ backported from Ruby 3.4.1:
 - win32/setup.mak: detect _M_ARM64 so MACHINE=arm64 (not x86 fallback),
   fixing sitearch=arm64-mswin64_140 and config.h placement
 - win32/Makefile.sub: gate SIZEOF_VOIDP/SIZE_T/PTRDIFF_T/INTPTR_T/UINTPTR_T,
-  ssize_t and PRI_PTR_PREFIX on TARGET_OS==mswin64 instead of ARCH==x64,
-  so arm64 gets 64-bit sizes (was getting 32-bit, causing value.h assert fail)
+  ssize_t and PRI_PTR_PREFIX on TARGET_OS==mswin64 instead of ARCH==x64
+- include/ruby/atomic.h: use _WIN64 instead of _WIN32&&_M_AMD64 for 64-bit
+  Interlocked ops so arm64 size_t atomics don't fall to the broken #else path
 ---
  coroutine/arm64/Context.asm    | 81 ++++++++++++++++++++++++++++++++++
  coroutine/arm64/Context.h      |  8 +++-
+ include/ruby/atomic.h          | 12 ++---
  include/ruby/internal/memory.h | 11 ++++-
  vm_dump.c                      |  8 ++++
  win32/Makefile.sub             | 12 +++--
  win32/setup.mak                |  6 ++-
- 6 files changed, 120 insertions(+), 6 deletions(-)
+ 7 files changed, 126 insertions(+), 12 deletions(-)
  create mode 100644 coroutine/arm64/Context.asm
 
 diff --git a/coroutine/arm64/Context.asm b/coroutine/arm64/Context.asm
@@ -135,6 +138,64 @@ index 1472621f..fe437e2c 100644
  
  static inline void coroutine_initialize_main(struct coroutine_context * context) {
      context->stack_pointer = NULL;
+diff --git a/include/ruby/atomic.h b/include/ruby/atomic.h
+index 3eb80fbf..d4b7023f 100644
+--- a/include/ruby/atomic.h
++++ b/include/ruby/atomic.h
+@@ -404,7 +404,7 @@ rbimpl_atomic_size_add(volatile size_t *ptr, size_t val)
+ #elif defined(HAVE_GCC_SYNC_BUILTINS)
+     __sync_add_and_fetch(ptr, val);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     /* Ditto for `InterlockeExchangedAdd`. */
+     InterlockedExchangeAdd64(ptr, val);
+ 
+@@ -456,7 +456,7 @@ rbimpl_atomic_size_inc(volatile size_t *ptr)
+ #elif defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_SYNC_BUILTINS)
+     rbimpl_atomic_size_add(ptr, 1);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     InterlockedIncrement64(ptr);
+ 
+ #elif defined(__sun) && defined(HAVE_ATOMIC_H) && (defined(_LP64) || defined(_I32LPx))
+@@ -538,7 +538,7 @@ rbimpl_atomic_size_sub(volatile size_t *ptr, size_t val)
+ #elif defined(HAVE_GCC_SYNC_BUILTINS)
+     __sync_sub_and_fetch(ptr, val);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     const ssize_t neg = -1;
+     InterlockedExchangeAdd64(ptr, neg * val);
+ 
+@@ -590,7 +590,7 @@ rbimpl_atomic_size_dec(volatile size_t *ptr)
+ #elif defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_SYNC_BUILTINS)
+     rbimpl_atomic_size_sub(ptr, 1);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     InterlockedDecrement64(ptr);
+ 
+ #elif defined(__sun) && defined(HAVE_ATOMIC_H) && (defined(_LP64) || defined(_I32LPx))
+@@ -688,7 +688,7 @@ rbimpl_atomic_size_exchange(volatile size_t *ptr, size_t val)
+ #elif defined(HAVE_GCC_SYNC_BUILTINS)
+     return __sync_lock_test_and_set(ptr, val);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     return InterlockedExchange64(ptr, val);
+ 
+ #elif defined(__sun) && defined(HAVE_ATOMIC_H) && (defined(_LP64) || defined(_I32LPx))
+@@ -823,7 +823,7 @@ rbimpl_atomic_size_cas(volatile size_t *ptr, size_t oldval, size_t newval)
+ #elif defined(HAVE_GCC_SYNC_BUILTINS)
+     return __sync_val_compare_and_swap(ptr, oldval, newval);
+ 
+-#elif defined(_WIN32) && defined(_M_AMD64)
++#elif defined(_WIN64)
+     return InterlockedCompareExchange64(ptr, newval, oldval);
+ 
+ #elif defined(__sun) && defined(HAVE_ATOMIC_H) && (defined(_LP64) || defined(_I32LPx))
 diff --git a/include/ruby/internal/memory.h b/include/ruby/internal/memory.h
 index 6884db19..e1c993ec 100644
 --- a/include/ruby/internal/memory.h
