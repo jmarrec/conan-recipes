@@ -249,7 +249,7 @@ jobs:
         conan remote list
 
     - name: Setup Conan Cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       id: cacheconan
       with:
         path: |
@@ -264,7 +264,6 @@ jobs:
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
-        save-always: ${{ matrix.compiler == 'msvc' }}
 
     - name: Did restoring the conan-cache work? Yes
       if: steps.cacheconan.outputs.cache-hit == 'true'
@@ -326,6 +325,17 @@ jobs:
           exit "$code"
         fi
         exit 0
+
+    - name: Save Conan Cache
+      uses: actions/cache/save@v5
+      if: always()
+      with:
+        path: |
+          ${{ env.CONAN_USER_HOME }}/.conan-download-cache
+          ${{ env.CONAN_USER_HOME }}/short
+          ${{ env.CONAN_HOME }}/p
+          ${{ env.CONAN_HOME }}/data
+        key: ${{ steps.cacheconan.outputs.cache-primary-key }}
 
     - name: Archive conan output
       uses: actions/upload-artifact@v7
