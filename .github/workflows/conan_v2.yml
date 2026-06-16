@@ -257,8 +257,9 @@ jobs:
           ${{ env.CONAN_USER_HOME }}/short
           ${{ env.CONAN_HOME }}/p
           ${{ env.CONAN_HOME }}/data
-        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}-recipe-hash=${{ hashFiles('recipes/ruby/**') }}
         restore-keys: |
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-
