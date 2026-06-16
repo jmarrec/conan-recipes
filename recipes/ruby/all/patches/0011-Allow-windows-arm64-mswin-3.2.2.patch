@@ -1,18 +1,24 @@
-Subject: [PATCH] Allow windows arm64-mswin + fix MACHINE detection in setup.mak
+From 99421456f1cc896ef94f5d4f0a77f2276c1b75ee Mon Sep 17 00:00:00 2001
+From: Julien Marrec <julien.marrec@gmail.com>
+Date: Tue, 16 Jun 2026 21:52:03 +0200
+Subject: [PATCH] Allow windows arm64-mswin and fix MACHINE/size detection
 
-Backport of https://github.com/ruby/ruby/pull/12367 plus fix for arm64
-MACHINE detection in win32/setup.mak (backport from Ruby 3.4.1).
+Backport of https://github.com/ruby/ruby/pull/12367 plus arm64 build fixes
+backported from Ruby 3.4.1:
 
-Without _M_ARM64 check in setup.mak, MACHINE falls back to x86 -> ARCH=i386 ->
-sitearch=i386-mswin64_140 -> SIZEOF_VOIDP=4 -> STATIC_ASSERT in value.h fails.
+- win32/setup.mak: detect _M_ARM64 so MACHINE=arm64 (not x86 fallback),
+  fixing sitearch=arm64-mswin64_140 and config.h placement
+- win32/Makefile.sub: gate SIZEOF_VOIDP/SIZE_T/PTRDIFF_T/INTPTR_T/UINTPTR_T,
+  ssize_t and PRI_PTR_PREFIX on TARGET_OS==mswin64 instead of ARCH==x64,
+  so arm64 gets 64-bit sizes (was getting 32-bit, causing value.h assert fail)
 ---
  coroutine/arm64/Context.asm    | 81 ++++++++++++++++++++++++++++++++++
  coroutine/arm64/Context.h      |  8 +++-
  include/ruby/internal/memory.h | 11 ++++-
  vm_dump.c                      |  8 ++++
- win32/Makefile.sub             |  6 +++
+ win32/Makefile.sub             | 12 +++--
  win32/setup.mak                |  6 ++-
- 6 files changed, 117 insertions(+), 3 deletions(-)
+ 6 files changed, 120 insertions(+), 6 deletions(-)
  create mode 100644 coroutine/arm64/Context.asm
 
 diff --git a/coroutine/arm64/Context.asm b/coroutine/arm64/Context.asm
@@ -184,7 +190,7 @@ index e31d70c0..0611e3c9 100644
                      mac = IMAGE_FILE_MACHINE_I386;
                      frame.AddrPC.Mode = AddrModeFlat;
 diff --git a/win32/Makefile.sub b/win32/Makefile.sub
-index b8c16b8b..643d2ef8 100644
+index b8c16b8b..d4a84027 100644
 --- a/win32/Makefile.sub
 +++ b/win32/Makefile.sub
 @@ -331,6 +331,9 @@ COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.asm)
@@ -197,6 +203,33 @@ index b8c16b8b..643d2ef8 100644
  !else
  COROUTINE_OBJ = coroutine/copy/Context.obj
  COROUTINE_SRC = $(COROUTINE_OBJ:.obj=.c)
+@@ -678,7 +681,7 @@ $(CONFIG_H): $(MKFILES) $(srcdir)/win32/Makefile.sub $(win_srcdir)/Makefile.sub
+ #define _INTEGRAL_MAX_BITS 64
+ #endif
+ #define SIZEOF_OFF_T 8
+-!if "$(ARCH)" == "x64"
++!if "$(TARGET_OS)" == "mswin64"
+ #define SIZEOF_VOIDP 8
+ !else
+ #define SIZEOF_VOIDP 4
+@@ -700,7 +703,7 @@ $(CONFIG_H): $(MKFILES) $(srcdir)/win32/Makefile.sub $(win_srcdir)/Makefile.sub
+ #define NUM2CLOCKID(v) NUM2INT(v)
+ #define SIZEOF_CLOCK_T 4
+ #define SIZEOF_RLIM_T 0
+-!if "$(ARCH)" == "x64"
++!if "$(TARGET_OS)" == "mswin64"
+ #define SIZEOF_SIZE_T 8
+ #define SIZEOF_PTRDIFF_T 8
+ #define SIZEOF_INTPTR_T 8
+@@ -807,7 +810,7 @@ $(CONFIG_H): $(MKFILES) $(srcdir)/win32/Makefile.sub $(win_srcdir)/Makefile.sub
+ #define HAVE_INTPTR_T 1
+ #define HAVE_UINTPTR_T 1
+ #define HAVE_SSIZE_T 1
+-!if "$(ARCH)" == "x64"
++!if "$(TARGET_OS)" == "mswin64"
+ #define ssize_t __int64
+ #define PRI_PTR_PREFIX "I64"
+ !else
 @@ -1286,6 +1289,9 @@ $(ruby_pc): $(RBCONFIG)
  {$(srcdir)/coroutine/win64}.asm{coroutine/win64}.obj:
  	$(ECHO) assembling $(<:\=/)
