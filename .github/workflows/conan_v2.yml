@@ -137,11 +137,11 @@ jobs:
           allow_failure: true
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: "0"
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"  # 3.10 is the first one to have a prebuilt binary for macos-14 (arm64)
 
@@ -249,7 +249,7 @@ jobs:
         conan remote list
 
     - name: Setup Conan Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cacheconan
       with:
         path: |
@@ -328,7 +328,7 @@ jobs:
         exit 0
 
     - name: Archive conan output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: ${{ always() }}
       with:
         name: "conan-output-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
@@ -341,7 +341,7 @@ jobs:
         python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs.zip
 
     - name: Upload the logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: ${{ always() }}
       with:
         name: "conan-logs-${{ matrix.arch }}-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
