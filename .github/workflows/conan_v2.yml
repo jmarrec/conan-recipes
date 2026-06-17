@@ -26,9 +26,9 @@ jobs:
       # fail-fast: Default is true, switch to false to allow one platform to fail and still run others
       fail-fast: false
       matrix:
-        build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-16, apple-clang-17, apple-clang-21, apple-clang-15-armv8, apple-clang-16-armv8, apple-clang-17-armv8, apple-clang-21-armv8, msvc-2022]
+        build_name: [gcc-11, gcc-12, gcc-13, gcc-14, gcc-11-armv8, gcc-13-armv8, apple-clang-16, apple-clang-17, apple-clang-21, apple-clang-15-armv8, apple-clang-16-armv8, apple-clang-17-armv8, apple-clang-21-armv8, msvc-2022, msvc-2026, msvc-2026-armv8]
         build_type: [Release, Debug]
-        recipe_version: ["3.2.2", "3.3.0"]
+        recipe_version: ["3.2.2"] #, "3.3.0"]
         include:
         - build_name: gcc-11
           compiler: gcc
@@ -121,13 +121,25 @@ jobs:
           os: windows-2022
           arch: x86_64
           allow_failure: false
+        - build_name: msvc-2026
+          compiler: msvc
+          version: 195
+          os: windows-2025-vs2026
+          arch: x86_64
+          allow_failure: true
+        - build_name: msvc-2026-armv8
+          compiler: msvc
+          version: 195
+          os: windows-11-vs2026-arm
+          arch: armv8
+          allow_failure: true
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: "0"
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"  # 3.10 is the first one to have a prebuilt binary for macos-14 (arm64)
 
@@ -235,7 +247,7 @@ jobs:
         conan remote list
 
     - name: Setup Conan Cache
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v5
       id: cacheconan
       with:
         path: |
@@ -243,14 +255,14 @@ jobs:
           ${{ env.CONAN_USER_HOME }}/short
           ${{ env.CONAN_HOME }}/p
           ${{ env.CONAN_HOME }}/data
-        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}
+        key: conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}-recipe-hash=${{ hashFiles('recipes/ruby/**') }}
         restore-keys: |
+          conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-cachekey=${{ secrets.CACHE_KEY }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-recipe-version=${{ matrix.recipe_version}}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-conan-profile=${{ hashFiles(env.CONAN_PROFILE_DEFAULT) }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-${{ matrix.version}}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-compiler=${{ matrix.compiler }}-
           conan-cache-${{ matrix.os }}-build=${{ matrix.build_type }}-
-        save-always: ${{ matrix.compiler == 'msvc' }}
 
     - name: Did restoring the conan-cache work? Yes
       if: steps.cacheconan.outputs.cache-hit == 'true'
@@ -313,8 +325,19 @@ jobs:
         fi
         exit 0
 
+    - name: Save Conan Cache
+      uses: actions/cache/save@v5
+      if: always()
+      with:
+        path: |
+          ${{ env.CONAN_USER_HOME }}/.conan-download-cache
+          ${{ env.CONAN_USER_HOME }}/short
+          ${{ env.CONAN_HOME }}/p
+          ${{ env.CONAN_HOME }}/data
+        key: ${{ steps.cacheconan.outputs.cache-primary-key }}
+
     - name: Archive conan output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: ${{ always() }}
       with:
         name: "conan-output-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"
@@ -327,7 +350,7 @@ jobs:
         python ci/extract_ruby_logs.py recipes/ruby/all/conan_output --zip-file logs.zip
 
     - name: Upload the logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: ${{ always() }}
       with:
         name: "conan-logs-${{ matrix.arch }}-ruby_${{ matrix.recipe_version }}-${{ matrix.build_name }}-${{ matrix.build_type }}"

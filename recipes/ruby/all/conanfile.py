@@ -106,14 +106,17 @@ class RubyConan(ConanFile):
         self.requires("zlib/1.3.1")
 
         if self.options.with_openssl:
+            # no_zlib=True: openssl fails to link on Windows ARM with zlib;
+            # TLS compression is insecure (CRIME attack) and disabled in practice everywhere
+            openssl_options = {"no_zlib": True}
             if Version(self.version) < "3.2.0":
-                self.requires("openssl/3.1.0")
+                self.requires("openssl/3.1.0", options=openssl_options)
             elif Version(self.version) < "3.3.0":
                 # self.requires("openssl/[>=1.1.1 <=3.1]")
-                self.requires("openssl/3.1.0")
+                self.requires("openssl/3.1.0", options=openssl_options)
             else:
                 # self.requires("openssl/[>=1.1.1 <=3.2]")
-                self.requires("openssl/3.2.0")
+                self.requires("openssl/3.2.0", options=openssl_options)
 
         if self.options.get_safe("with_libyaml"):
             self.requires("libyaml/0.2.5")

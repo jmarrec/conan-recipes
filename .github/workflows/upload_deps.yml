@@ -41,6 +41,8 @@ jobs:
           - apple-clang-21-armv8
           - msvc-2022
           - msvc-2022-i386
+          - msvc-2026
+          - msvc-2026-armv8
         build_type: [Release, Debug]
         # Right now, conan-center uses gcc-11 (and apple-clang 13, but that shoudln't be a problem) which is at risk of causing ABI compatibiliy issues (GLIBC/GLIBCXX version mistmatches)
         include:
@@ -156,12 +158,26 @@ jobs:
           arch: x86
           allow_failure: false
           build_strategy: 'missing'
+        - build_name: msvc-2026
+          compiler: msvc
+          version: 195
+          os: windows-2025-vs2026
+          arch: x86_64
+          allow_failure: true
+          build_strategy: 'missing'
+        - build_name: msvc-2026-armv8
+          compiler: msvc
+          version: 195
+          os: windows-11-vs2026-arm
+          arch: armv8
+          allow_failure: true
+          build_strategy: 'missing'
         exclude:
         - build_name: msvc-2022-i386
           build_type: Debug
 
     steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"  # 3.10 is the first one to have a prebuilt binary for macos-14 (arm64)
 
@@ -269,7 +285,7 @@ jobs:
         conan remote list
 
     - name: Setup Conan Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cacheconan
       with:
         path: |
