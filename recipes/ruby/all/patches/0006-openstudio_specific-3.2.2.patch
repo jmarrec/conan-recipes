@@ -96,7 +96,7 @@ diff --git a/win32/Makefile.sub b/win32/Makefile.sub
 diff --git a/lib/rubygems.rb b/lib/rubygems.rb
 --- lib/rubygems.rb
 +++ lib/rubygems.rb
-@@ -1303,22 +1303,23 @@ An Array (#{env.inspect}) was passed in from #{caller[3]}
+@@ -1303,22 +1303,24 @@ An Array (#{env.inspect}) was passed in from #{caller[3]}
  
    MARSHAL_SPEC_DIR = "quick/Marshal.#{Gem.marshal_version}/"
  
@@ -129,7 +129,8 @@ diff --git a/lib/rubygems.rb b/lib/rubygems.rb
 +  require 'rubygems/resolver' # autoload :Resolver,
 +  require 'rubygems/source' # autoload :Source,
 +  require 'rubygems/source_list' # autoload :SourceList,
-+  require 'rubygems/spec_fetcher' # autoload :SpecFetcher,
++  # Defer SpecFetcher so resolv/securerandom load after default gems initialize.
++  autoload :SpecFetcher,        File.expand_path("rubygems/spec_fetcher", __dir__)
 +  require 'rubygems/specification_policy' # autoload :SpecificationPolicy,
 +  require 'rubygems/util' # autoload :Util,
 +  require 'rubygems/version' # autoload :Version,
