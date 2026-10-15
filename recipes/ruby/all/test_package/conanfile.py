@@ -69,12 +69,19 @@ class TestPackageConan(ConanFile):
         self.output.info(f"Expected version: {expected_version}")
         assert expected_version in output_str
 
+    def _test_bundler_securerandom_activation(self):
+        # The eager SpecFetcher require is specific to the Ruby 3.2.2 patch.
+        if self._ruby_version() != "3.2.2":
+            return
+        test_script = os.path.join(self.source_folder, "test_bundler_securerandom.rb")
+        self.run(f'ruby "{test_script}"', env="conanrun")
 
     def test(self):
         if can_run(self):
             self._test_ruby_executable_version()
             self._test_ruby_execute()
             self._test_ruby_openssl_version()
+            self._test_bundler_securerandom_activation()
 
             # test library
             bin_path = os.path.join(self.cpp.build.bindirs[0], "test_package")
